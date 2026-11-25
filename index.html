@@ -64,7 +64,9 @@ input{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);ba
 .chips{display:flex;gap:7px;flex-wrap:wrap}
 .chip{padding:8px 13px;border-radius:99px;background:var(--card2);border:1px solid var(--line);cursor:pointer;font:700 14px Cairo,sans-serif;color:var(--txt)}
 .chip.on{background:var(--gold);color:#241a00;border-color:var(--gold)}
-.langbar{display:flex;justify-content:center;margin-top:6px}
+.langbar{display:flex;justify-content:center;gap:8px;margin-top:6px}
+.coinbadge{padding:8px 14px;border-radius:99px;background:#ffc23d22;border:1px solid var(--gold);color:var(--gold);font:800 14px Cairo,sans-serif;cursor:pointer}
+.coinline{font-size:30px;font-weight:900;color:var(--gold);margin:6px 0}
 .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-left:46px;min-height:40px;font-size:14px;color:var(--mut);gap:6px}
 .top b{color:var(--gold);font-size:18px}
 .link{background:none;border:0;color:var(--mut);font:700 14px Cairo,sans-serif;cursor:pointer}
@@ -171,7 +173,7 @@ const T = {
       'لو مش موجود بيروح في <b>صندوق الغلط</b> (10 خانات)، وكل حرف غلط = <b>-1</b>',
       'لو الصندوق اتملى = <b>-10</b> وخسرت الاسم، ومحدش يقدر يعمل عليه ريسك',
       'تقدر تقول الاسم كله في أي وقت. لو غلط = <b>-10</b> وتكمّل لعب',
-      '<b>تلميح 💡</b>: تتفرج على إعلان قصير وتاخد معلومة عن الاسم من غير خصم. 3 تلميحات لكل اسم بالترتيب (في الأفلام: السنة، النوع، البطل). في الجماعي التلميح مش بياخد دورك، تاخده وتكمّل وتحط حرف',
+      '<b>تلميح 💡</b>: تدفع 10 كوينز 🪙 أو تتفرج على إعلان قصير، وتاخد معلومة عن الاسم من غير خصم من السكور. 3 تلميحات لكل اسم بالترتيب (في الأفلام: السنة، النوع، البطل). في الجماعي التلميح مش بياخد دورك، تاخده وتكمّل وتحط حرف',
       'سكور <b>0</b> = حليت من غير ولا غلطة 👑'],
     multiRules: [
       '<b>اللاعيبة بالدور:</b> كل راوند لاعب بيحط الأسماء للباقيين، وسكوره <b>متجمد</b> الراوند ده',
@@ -225,7 +227,11 @@ const T = {
     noProfiles: 'لسه مفيش لاعيبة محفوظين. العبوا جماعي واكتبوا أساميكم.', full: 'كل الخانات مليانة',
     ranks: {new: '🆕 جديد', 1: '🥉 مبتدئ', 2: '🥈 هاوي', 3: '🥇 محترف', 4: '👑 أسطورة'},
     stGames: 'جيمات', stWins: 'فوز', stTitles: 'أسماء', stAvg: 'متوسط السكور', stPerfect: 'من غير غلطة 👑', stRisk: 'ريسك صح',
-    del: 'مسح', delQ: n => `تمسح ${n} وكل إحصائياته؟`
+    del: 'مسح', delQ: n => `تمسح ${n} وكل إحصائياته؟`,
+    hintChoose: 'تاخد التلميح إزاي؟', hintCoins: n => `🪙 ادفع ${n} كوينز`, hintAdFree: '📺 اتفرج على إعلان (ببلاش)', noCoins: 'الكوينز مش كفاية',
+    dailyGift: 'هدية النهارده 🎁', winCoins: 'حليت الاسم', perfectCoins: 'من غير ولا غلطة 👑',
+    shopBtn: '🪙 الكوينز والمتجر', shopTitle: '🪙 الكوينز', shopNote: n => `كل تلميح بـ ${n} كوينز. بتكسب كوينز كل يوم، ولما تحل الأسماء في الفردي، ومن الإعلانات.`,
+    shopAd: n => `📺 اتفرج على إعلان وخد ${n} كوينز`, shopBuy: 'اشتري كوينز', soon: 'قريبًا', shopSoon: 'الشراء هيتفتح قريبًا.'
   },
   en: {
     title: 'Riska', subtitle: 'Guess the Name', tagline: 'Letter by letter… before the wrong box fills up 🔥', langBtn: '🌐 عربي',
@@ -238,7 +244,7 @@ const T = {
       'If it isn\'t, it goes into the <b>wrong box</b> (10 slots). Each wrong letter = <b>-1</b>',
       'If the box fills up = <b>-10</b> and you lose the title. Nobody can risk on it',
       'You can say the whole title any time. Wrong = <b>-10</b> and you keep playing',
-      '<b>Hint 💡</b>: watch a short ad and get a clue with no penalty. Up to 3 per title, in order (movies: year, genre, lead actor). In multiplayer a hint doesn\'t use your turn: take it, then play a letter',
+      '<b>Hint 💡</b>: pay 10 coins 🪙 or watch a short ad and get a clue with no score penalty. Up to 3 per title, in order (movies: year, genre, lead actor). In multiplayer a hint doesn\'t use your turn: take it, then play a letter',
       'A score of <b>0</b> = solved without a single mistake 👑'],
     multiRules: [
       '<b>Players take turns:</b> each round one player picks the titles for everyone else. Their score is <b>frozen</b> that round',
@@ -292,7 +298,11 @@ const T = {
     noProfiles: 'No saved players yet. Play multiplayer and type your names.', full: 'All slots are full',
     ranks: {new: '🆕 New', 1: '🥉 Beginner', 2: '🥈 Amateur', 3: '🥇 Pro', 4: '👑 Legend'},
     stGames: 'Games', stWins: 'Wins', stTitles: 'Titles', stAvg: 'Avg score', stPerfect: 'Flawless 👑', stRisk: 'Risks won',
-    del: 'Delete', delQ: n => `Delete ${n} and all their stats?`
+    del: 'Delete', delQ: n => `Delete ${n} and all their stats?`,
+    hintChoose: 'How do you want your hint?', hintCoins: n => `🪙 Pay ${n} coins`, hintAdFree: '📺 Watch an ad (free)', noCoins: 'Not enough coins',
+    dailyGift: 'daily gift 🎁', winCoins: 'title solved', perfectCoins: 'flawless 👑',
+    shopBtn: '🪙 Coins & shop', shopTitle: '🪙 Coins', shopNote: n => `Each hint costs ${n} coins. Earn coins every day, by solving titles in solo, and from ads.`,
+    shopAd: n => `📺 Watch an ad, get ${n} coins`, shopBuy: 'Buy coins', soon: 'soon', shopSoon: 'Buying opens soon.'
   }
 };
 function t(k, ...a){ const v = (T[LANG] || T.ar)[k] ?? T.ar[k]; return typeof v === 'function' ? v(...a) : v; }
@@ -691,6 +701,35 @@ function rankOf(p){ if (!p || p.titles < 5) return 'new'; const avg = p.sumPen /
 const rankLabel = p => t('ranks')[rankOf(p)];
 function statRisk(pi, ok){ const pl = S.players && S.players[pi]; if (pl) updateProfile(pl.prof, p => { if (ok) p.riskOk++; else p.riskBad++; }); }
 
+// ================= الكوينز 🪙 (فكرة مصطفى) =================
+// محفظة على الموبايل دلوقتي. في الأونلاين هتبقى على حساب اللاعب.
+// تكسب: هدية أول مرة + هدية كل يوم + حل اسم + إعلان من المتجر. تصرف: التلميح.
+// الشراء بفلوس حقيقية بعدين لما منصة النشر تدعم الدفع (CrazyGames / فيسبوك).
+const HINT_COST = 10, START_COINS = 30, DAILY_COINS = 20, AD_COINS = 15, WIN_COINS = 3, PERFECT_COINS = 8;
+let MEM_COINS = null;
+function getCoins(){ let v = null; try { v = localStorage.getItem('gtn_coins'); } catch(e){} if (v === null) v = MEM_COINS; if (v === null) { setCoins(START_COINS); return START_COINS; } return +v || 0; }
+function setCoins(n){ MEM_COINS = String(Math.max(0, n)); try { localStorage.setItem('gtn_coins', MEM_COINS); } catch(e){} const el = document.getElementById('coinbal'); if (el) el.textContent = MEM_COINS; }
+function addCoins(n, why){ setCoins(getCoins() + n); if (why) toast(`🪙 +${n} ${why}`); }
+function spendCoins(n){ const c = getCoins(); if (c < n) return false; setCoins(c - n); return true; }
+function dailyBonus(){
+  const today = new Date().toISOString().slice(0, 10); let last = null;
+  try { last = localStorage.getItem('gtn_daily'); localStorage.setItem('gtn_daily', today); } catch(e){ return; }
+  if (last !== today) { getCoins(); addCoins(DAILY_COINS, t('dailyGift')); }
+}
+const coinBadge = () => `<button class="coinbadge" onclick="sfx('tap');shopScreen()">🪙 <b id="coinbal">${getCoins()}</b></button>`;
+function shopScreen(){
+  stopTimer();
+  const packs = [[100, '0.99$'], [300, '2.49$'], [1000, '6.99$']].map(([n, p]) => `<button class="btn" disabled style="opacity:.55">🪙 ${n} · ${p} <small>(${t('soon')})</small></button>`).join('');
+  app.innerHTML = `<button class="link" onclick="home()">${t('back')}</button>
+    <div class="card center"><h2>${t('shopTitle')}</h2><div class="coinline">🪙 <b id="coinbal">${getCoins()}</b></div>
+      <p class="mut">${t('shopNote', HINT_COST)}</p>
+      <button class="btn hint" onclick="shopAd()">${t('shopAd', AD_COINS)}</button>
+      <h2 style="margin-top:14px">${t('shopBuy')}</h2>${packs}
+      <p class="mut" style="font-size:12px">${t('shopSoon')}</p></div>`;
+}
+function shopAd(){ sfx('tap'); PF.rewardedAd(ok => { if (ok) { sfx('ok'); addCoins(AD_COINS, ''); } else toast(t('adFail')); shopScreen(); }); }
+function rewardSolve(b){ if (b.status !== 'won') return; const pen = penalty(b); addCoins(pen === 0 ? PERFECT_COINS : WIN_COINS, pen === 0 ? t('perfectCoins') : t('winCoins')); }
+
 const app = document.getElementById('app');
 let S = {};
 
@@ -837,7 +876,7 @@ function home(){
   S = {};
   const best = getBest();
   app.innerHTML = `
-    <div class="langbar"><button class="chip" onclick="toggleLang()">${t('langBtn')}</button></div>
+    <div class="langbar"><button class="chip" onclick="toggleLang()">${t('langBtn')}</button>${coinBadge()}</div>
     <div class="logo"><div class="orbit"><div class="core"><img src="riska-logo.svg" alt="" onerror="this.replaceWith('🎯')"></div><div class="ring">${['🎬', '📺', '🎵', '⭐', '🎤', '🍿'].map((e, i) => `<span style="--a:${i * 60}deg"><i>${e}</i></span>`).join('')}</div></div></div>
     <h1>${t('title')}</h1>
     <p class="brandsub">${t('subtitle')}</p>
@@ -845,6 +884,7 @@ function home(){
     <button class="btn pri" onclick="sfx('tap');multiSetup()">${t('multi')}</button>
     <button class="btn" onclick="sfx('tap');soloSetup()">${t('solo')}</button>
     <button class="btn" onclick="sfx('tap');profilesScreen()">${t('profilesBtn')}</button>
+    <button class="btn" onclick="sfx('tap');shopScreen()">${t('shopBtn')}</button>
     <button class="btn ghost" onclick="sfx('tap');rules()">${t('how')}</button>
     ${best !== null ? `<p class="mut center">${t('best')} <b class="score">${best}</b></p>` : ''}
     <p class="mut center" style="margin-top:22px">${t('beta')}</p>`;
@@ -945,7 +985,7 @@ function doSolve(){
 }
 function afterAction(b, msg, good, letter){
   if (S.mode === 'solo') {
-    if (b.status !== 'play' && !b.counted) { b.counted = true; S.total += penalty(b); }
+    if (b.status !== 'play' && !b.counted) { b.counted = true; S.total += penalty(b); rewardSolve(b); }
     renderSolo(); if (!good) shake(); else if (b.status === 'play') toast(msg);
   } else {
     nextTurn(msg, SHOW_MS, letter ? S.turn : null);
@@ -1155,17 +1195,32 @@ const PF = {
   }
 };
 function canHint(b){ return b.status === 'play' && !!b.hint && b.hints < 3; }
+// التلميح: يا تدفع كوينز من محفظتك، يا تتفرج على إعلان ببلاش
 function hintAd(){
   if (locked()) return;
   const b = curBoard(); if (!canHint(b)) return;
   if (S.mode !== 'solo') { stopTimer(); S.busy = true; }
   sfx('tap');
+  const have = getCoins(), can = have >= HINT_COST;
+  modal(`<h2>${t('adTitle')}</h2><p class="mut">${t('hintChoose')}</p>
+    <p class="center coinline">🪙 <b>${have}</b></p>
+    <div class="actions" style="flex-direction:column">
+      <button class="btn pri" ${can ? '' : 'disabled style="opacity:.5"'} onclick="hintPay('coins')">${t('hintCoins', HINT_COST)}</button>
+      <button class="btn hint" onclick="hintPay('ad')">${t('hintAdFree')}</button>
+      <button class="btn ghost" onclick="hintPay(null)">${t('cancel')}</button>
+    </div>`);
+}
+function hintResume(){ if (S.mode === 'solo') renderSolo(); else { S.busy = false; renderMulti(); startTimer(); } }
+function hintPay(how){
+  closeModal(); const b = curBoard();
+  if (!how) return hintResume();
+  if (how === 'coins') { if (!spendCoins(HINT_COST)) { toast(t('noCoins')); return hintResume(); } return giveHint(b); }
   PF.rewardedAd(ok => {
-    if (!ok) { // الإعلان مجاش أو اتقفل قبل ما يخلص: مفيش تلميح، واللاعب يكمّل دوره
-      toast(t('adFail'));
-      if (S.mode === 'solo') renderSolo(); else { S.busy = false; renderMulti(); startTimer(); }
-      return;
-    }
+    if (!ok) { toast(t('adFail')); return hintResume(); } // الإعلان مجاش: مفيش تلميح، واللاعب يكمّل دوره
+    giveHint(b);
+  });
+}
+function giveHint(b){
     {
       const i = b.hints; b.hints++; b.fresh = null; S.hintCount = (S.hintCount || 0) + 1;
       const msg = '💡 ' + (b.hint.labels[LANG] || b.hint.labels.ar)[i] + ': ' + pickLang(b.hint.h[i]);
@@ -1177,7 +1232,6 @@ function hintAd(){
         renderMulti(); startTimer(); toast(msg);
       }
     }
-  });
 }
 function riskModal(){
   if (locked()) return;
@@ -1319,6 +1373,7 @@ function startTiebreak(){
 
 applyLang();
 home();
+setTimeout(dailyBonus, 600);
 PF.init().then(() => { if (PF.fb) home(); });
 </script>
 </body>
