@@ -1,0 +1,15 @@
+{
+  "name": "Riska: Guess the Name",
+  "short_name": "Riska",
+  "description": "Guess movies, series, songs and famous names letter by letter.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#120f1f",
+  "theme_color": "#120f1f",
+  "icons": [
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "riska-logo.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
