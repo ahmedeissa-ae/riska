@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Riska logo: a target (the "risk") with blank letter slots under it (the "guess the name") -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a2470"/>
+      <stop offset="1" stop-color="#120f1f"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff3c4"/>
+      <stop offset=".55" stop-color="#ffc23d"/>
+      <stop offset="1" stop-color="#e08a00"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- target -->
+  <circle cx="246" cy="222" r="148" fill="none" stroke="url(#gold)" stroke-width="28"/>
+  <circle cx="246" cy="222" r="94" fill="none" stroke="#ff4f64" stroke-width="28"/>
+  <circle cx="246" cy="222" r="42" fill="url(#gold)"/>
+  <!-- dart hitting the centre -->
+  <line x1="420" y1="56" x2="262" y2="206" stroke="#f6f1e7" stroke-width="16" stroke-linecap="round"/>
+  <polygon points="246,222 286,206 262,182" fill="#f6f1e7"/>
+  <polygon points="420,56 452,40 446,70 424,64" fill="#ff4f64"/>
+  <polygon points="420,56 404,24 434,30 428,52" fill="#ff4f64"/>
+  <!-- blank letter slots: _ _ / _ _ _ -->
+  <g fill="url(#gold)">
+    <rect x="96" y="420" width="46" height="14" rx="7"/>
+    <rect x="152" y="420" width="46" height="14" rx="7"/>
+    <rect x="276" y="420" width="46" height="14" rx="7"/>
+    <rect x="332" y="420" width="46" height="14" rx="7"/>
+    <rect x="388" y="420" width="46" height="14" rx="7"/>
+  </g>
+  <line x1="222" y1="442" x2="248" y2="398" stroke="#ffc23d" stroke-width="12" stroke-linecap="round"/>
+</svg>

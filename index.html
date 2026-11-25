@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ريسكا: خمّن الاسم</title>
+<style>
+/* خط Cairo جوه اللعبة نفسها (رخصة OFL مفتوحة)، مش بيتحمّل من جوجل */
+@font-face{font-family:'Cairo';font-style:normal;font-weight:200 1000;font-display:swap;src:url(fonts/cairo-arabic.woff2) format('woff2');unicode-range:U+0600-06FF,U+0750-077F,U+0870-0891,U+0897-08E1,U+08E3-08FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:200 1000;font-display:swap;src:url(fonts/cairo-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Cairo';font-style:normal;font-weight:200 1000;font-display:swap;src:url(fonts/cairo-latin.woff2) format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+:root{--bg:#120f1f;--card:#1e1a32;--card2:#2b2644;--gold:#ffc23d;--txt:#f6f1e7;--mut:#a59fb8;--ok:#3ee08f;--bad:#ff4f64;--line:#3a3458;--pc:#ffc23d}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:radial-gradient(ellipse at 50% -10%,#3a2470 0%,var(--bg) 55%) fixed;color:var(--txt);font-family:Cairo,system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+#app{max-width:560px;margin:0 auto;padding:16px 14px 60px}
+.logo{text-align:center;margin:18px 0 6px}
+/* اللوجو المؤقت: 🎯 في النص وأيقونات الأقسام بتلف حواليه (لحد ما يبقى عندنا لوجو نهائي) */
+.orbit{position:relative;width:130px;height:130px;margin:0 auto}
+.orbit .core{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:52px;filter:drop-shadow(0 4px 18px #ffc23d55)}
+.orbit .core img{width:76px;height:76px;border-radius:18px}
+.orbit .ring{position:absolute;inset:0;animation:spin 14s linear infinite}
+.orbit .ring span{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-17px;display:flex;align-items:center;justify-content:center;font-size:24px;
+  transform:rotate(var(--a)) translateY(-56px) rotate(calc(-1 * var(--a)))}
+.orbit .ring span i{font-style:normal;display:block;animation:spin 14s linear infinite reverse}
+h1{font-size:40px;font-weight:900;text-align:center;background:linear-gradient(180deg,#fff3c4,var(--gold) 60%,#e08a00);-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:0 4px 30px #ffc23d33}
+h2{font-size:21px;font-weight:800;margin-bottom:6px}
+.brandsub{text-align:center;font-size:18px;font-weight:800;color:var(--txt);margin-top:-4px;letter-spacing:.5px}
+.sub{text-align:center;color:var(--mut);margin:2px 0 26px;font-size:15px}
+.btn{display:block;width:100%;border:0;border-radius:16px;padding:15px;font:800 17px Cairo,sans-serif;cursor:pointer;margin:10px 0;background:var(--card2);color:var(--txt);box-shadow:0 4px 0 #0006;transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0006}
+.btn.pri{background:linear-gradient(180deg,#ffd466,#ffb200);color:#2a1c00;box-shadow:0 4px 0 #a86f00}
+.btn.bad{background:linear-gradient(180deg,#ff6b7d,#e8324a);color:#fff;box-shadow:0 4px 0 #8f1626}
+.btn.hint{background:linear-gradient(180deg,#8f7bff,#6a52ff);color:#fff;box-shadow:0 4px 0 #3b2bb0}
+.btn.hint small{opacity:.8;font-size:12px}
+.hints{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:8px}
+.hchip{background:#6a52ff33;border:1px solid #8f7bff;color:#e6e0ff;border-radius:99px;padding:3px 12px;font-size:13px;font-weight:700}
+.hchip small{color:#b9adff;font-size:11px}
+.adbox{height:170px;border-radius:14px;background:repeating-linear-gradient(45deg,#2b2644,#2b2644 14px,#25203b 14px,#25203b 28px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;margin:10px 0}
+.adbox .cd{font-size:48px;font-weight:900;color:var(--gold)}
+.btn.ghost{background:transparent;box-shadow:none;border:1px solid var(--line)}
+.btn.sm{display:inline-block;width:auto;padding:10px 14px;font-size:15px;margin:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin:12px 0}
+label{display:block;font-size:13px;color:var(--mut);margin:12px 0 6px}
+input{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:#0e0b19;color:var(--txt);font:600 16px Cairo,sans-serif}
+.row{display:flex;gap:8px;align-items:center}
+.row input{flex:1}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{padding:8px 13px;border-radius:99px;background:var(--card2);border:1px solid var(--line);cursor:pointer;font:700 14px Cairo,sans-serif;color:var(--txt)}
+.chip.on{background:var(--gold);color:#241a00;border-color:var(--gold)}
+.langbar{display:flex;justify-content:center;margin-top:6px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-left:46px;min-height:40px;font-size:14px;color:var(--mut);gap:6px}
+.top b{color:var(--gold);font-size:18px}
+.link{background:none;border:0;color:var(--mut);font:700 14px Cairo,sans-serif;cursor:pointer}
+#mute{position:fixed;top:10px;left:10px;z-index:20;background:var(--card2);border:1px solid var(--line);border-radius:99px;width:40px;height:40px;font-size:18px;cursor:pointer}
+[dir=ltr] #mute{left:auto;right:10px}
+[dir=ltr] .top{padding-left:0;padding-right:46px}
+.board{background:var(--card);border:2px solid var(--line);border-inline-start:6px solid var(--pc);border-radius:18px;padding:12px;margin:10px 0;transition:.25s;scroll-margin-top:10px}
+.board.turn{border-color:var(--pc);box-shadow:0 0 0 4px color-mix(in srgb,var(--pc) 25%,transparent),0 10px 30px #0006;transform:scale(1.01)}
+.board.done{opacity:.85}
+.board.won{border-color:var(--ok)}
+.bhead{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:6px;font-size:16px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--pc);margin-inline-end:6px}
+.title{display:flex;flex-wrap:wrap;gap:8px 4px;justify-content:center;align-items:center;margin:8px 0 12px}
+.word{display:flex;gap:3px;align-items:center}
+.slot{width:28px;height:38px;border-radius:7px 7px 3px 3px;background:#ffffff0d;border-bottom:3px solid var(--mut);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900}
+.mini .slot{width:23px;height:32px;font-size:18px}
+.slot.show{border-color:var(--gold);color:var(--gold);background:#ffc23d1a}
+.slot.new{animation:pop .4s cubic-bezier(.3,1.8,.5,1)}
+.slot.fix{border-color:transparent;background:none;color:var(--mut)}
+.slot.rev{color:var(--bad);border-color:var(--bad)}
+.board.won .slot.show,.board.won .slot.rev{color:var(--ok);border-color:var(--ok);background:#3ee08f1a}
+.sep{color:var(--gold);font-size:26px;font-weight:900;padding:0 3px}
+.wrongbox{display:grid;grid-template-columns:repeat(10,1fr);gap:4px}
+.w{aspect-ratio:1;border:1px dashed var(--line);border-radius:7px;display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--bad);font-size:15px}
+.w.f{border:1px solid var(--bad);background:#ff4f6426}
+.w.new{animation:pop .35s}
+.pen{font-size:12px;color:var(--bad);font-weight:800;text-align:center;margin-top:6px}
+.kb{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;margin-top:12px}
+.kb.en{grid-template-columns:repeat(7,1fr)}
+.k{padding:10px 0;border-radius:11px;border:0;background:var(--card2);color:var(--txt);font:900 19px Cairo,sans-serif;cursor:pointer;box-shadow:0 3px 0 #0007}
+.k:active{transform:translateY(2px);box-shadow:none}
+.k:disabled{cursor:default;box-shadow:none}
+.k.ok{background:var(--ok);color:#06281a}
+.k.no{background:#3a2030;color:#7a5566}
+.actions{display:flex;gap:8px;margin-top:12px}
+.actions .btn{margin:0;font-size:14px;padding:12px 4px;white-space:nowrap}
+.badge{font-size:12px;padding:2px 10px;border-radius:99px;background:var(--card2);font-weight:800}
+.badge.ok{background:var(--ok);color:#06281a}.badge.bad{background:var(--bad);color:#fff}
+.lvtag{font-size:12px;padding:2px 10px;border-radius:99px;background:var(--card2);font-weight:800;color:var(--txt)}
+.dock{position:sticky;bottom:8px;border:2px solid var(--pc);box-shadow:0 -10px 40px #000a}
+.dock.wait .kb,.dock.wait .actions{opacity:.45;pointer-events:none}
+.buzzbar{background:#ffffff0d;border:1px dashed var(--gold);border-radius:14px;padding:8px 10px;margin:8px 0;font-weight:700;font-size:14px;animation:pop .25s}
+.buzzbar .chips{margin-top:8px;justify-content:center}
+.chip.bz{background:var(--pc);color:#1a1200;border-color:var(--pc);font-size:15px;padding:10px 14px}
+.turnName{font-size:20px;font-weight:900;color:var(--pc)}
+.tbar{height:8px;border-radius:99px;background:#ffffff14;overflow:hidden;margin:8px 0 2px}
+.tbar i{display:block;height:100%;background:var(--ok);border-radius:99px;transition:width 1s linear,background .3s}
+.tbar.warn i{background:var(--bad)}
+.tnum{font-weight:900;font-size:15px;min-width:34px;text-align:center}
+.tnum.warn{color:var(--bad);animation:pulse .5s infinite alternate}
+.mtime{float:left;font-weight:900;font-size:15px;color:var(--ok)}
+[dir=ltr] .mtime{float:right}
+.mtime.warn{color:var(--bad);animation:pulse .5s infinite alternate}
+table{width:100%;border-collapse:collapse;font-size:15px}
+td,th{padding:9px 6px;border-bottom:1px solid var(--line);text-align:start}
+th{color:var(--mut);font-weight:600;font-size:13px}
+.score{font-weight:900;color:var(--gold)}
+.modal{position:fixed;inset:0;background:#000c;display:flex;align-items:center;justify-content:center;padding:16px;z-index:30;animation:fade .15s}
+.modal .card{width:100%;max-width:440px;animation:pop .25s}
+.big{font-size:60px;text-align:center}
+.center{text-align:center}
+.mut{color:var(--mut);font-size:14px;line-height:1.9}
+ul.rules{padding-inline-start:18px;line-height:2.1;font-size:15px}
+ul.rules b{color:var(--gold)}
+.banner{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:25}
+.banner div{background:var(--pc);color:#1a1200;font-size:30px;font-weight:900;padding:14px 34px;border-radius:20px;box-shadow:0 10px 40px #000a;animation:ban 1s forwards}
+@keyframes ban{0%{transform:scale(.3) rotate(-8deg);opacity:0}25%{transform:scale(1.1) rotate(2deg);opacity:1}70%{transform:scale(1);opacity:1}100%{transform:scale(.9);opacity:0}}
+@keyframes pop{0%{transform:scale(.3)}100%{transform:scale(1)}}
+@keyframes fade{from{opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{to{transform:scale(1.25)}}
+.shake{animation:sh .4s}
+@keyframes sh{20%{transform:translateX(9px)}40%{transform:translateX(-9px)}60%{transform:translateX(6px)}80%{transform:translateX(-4px)}}
+.flashbad{animation:fb .5s}
+@keyframes fb{0%{background:#ff4f6455}}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--gold);padding:10px 20px;border-radius:99px;font-weight:800;z-index:40;white-space:nowrap;animation:fade .2s}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:35}
+</style>
+</head>
+<body>
+<button id="mute" onclick="toggleMute()">🔊</button>
+<canvas id="fx"></canvas>
+<div id="app"></div>
+<script>
+const MAXW = 10;
+const COLORS = ['#ffc23d','#4fd1ff','#ff7ad9','#7dff8a'];
+const AR_KEYS = 'ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي ة ء'.split(' ');
+const EN_KEYS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+// ================= اللغة (عربي / English) =================
+// كل نصوص الواجهة هنا. عشان نضيف لغة جديدة: نضيف قاموس جديد بنفس المفاتيح.
+let LANG = 'ar';
+try { LANG = localStorage.getItem('gtn_lang') || 'ar'; } catch(e){}
+const B = c => `<b style="color:var(--bad)">${c}</b>`;
+const T = {
+  ar: {
+    title: 'ريسكا', subtitle: 'خمّن الاسم', tagline: 'حرف حرف… قبل ما صندوق الغلط يتملي 🔥', langBtn: '🌐 English',
+    multi: '⚔️ لعب جماعي', solo: '🎯 لعب فردي', how: '📜 طريقة اللعب', best: 'أحسن سكور فردي ليك:', beta: 'نسخة تجريبية · كل اللاعيبة على نفس الموبايل',
+    back: '→ رجوع', exit: '→ خروج', next: '←',
+    rulesTitle: 'طريقة اللعب', multiRulesTitle: 'الجماعي',
+    rules: [
+      'الاسم بيظهر خانات: كل حرف خانة، وبين الكلمات <b>/</b>',
+      'تختار حرف: لو موجود بينزل في كل أماكنه (حتى لو متكرر)',
+      'لو مش موجود بيروح في <b>صندوق الغلط</b> (10 خانات)، وكل حرف غلط = <b>-1</b>',
+      'لو الصندوق اتملى = <b>-10</b> وخسرت الاسم، ومحدش يقدر يعمل عليه ريسك',
+      'تقدر تقول الاسم كله في أي وقت. لو غلط = <b>-10</b> وتكمّل لعب',
+      '<b>تلميح 💡</b>: تتفرج على إعلان قصير وتاخد معلومة عن الاسم من غير خصم. 3 تلميحات لكل اسم بالترتيب (في الأفلام: السنة، النوع، البطل). في الجماعي التلميح مش بياخد دورك، تاخده وتكمّل وتحط حرف',
+      'سكور <b>0</b> = حليت من غير ولا غلطة 👑'],
+    multiRules: [
+      '<b>اللاعيبة بالدور:</b> كل راوند لاعب بيحط الأسماء للباقيين، وسكوره <b>متجمد</b> الراوند ده',
+      '<b>اللعبة تختار:</b> الكل بيخمّن في كل راوند، وكل واحد ليه اسم مختلف',
+      '<b>المستوى:</b> كل اللاعيبة في الراوند الواحد بياخدوا أسماء من نفس المستوى (سهل، متوسط، صعب)',
+      'الدور بيلف: <b>حركة واحدة</b> لكل لاعب، صح أو غلط الدور يعدّي',
+      '<b>الجرس 🔔</b>: بعد كل حرف بيظهر شريط 3 ثواني. اللي عرف الاسم يدوس على اسمه بسرعة، وأسرع واحد ياخد الإجابة (صاحب الاسم يقوله، غيره ريسك). مفيش إلغاء، والجرس مش بياخد دور حد',
+      'في <b>تايمر</b> لكل دور. لو الوقت خلص من غير ما تلعب = <b>-1</b> ⏰ في صندوق الغلط',
+      '<b>ريسك 🎯</b> من أول حركة: تخمّن اسم لاعب تاني. صح = <b>+5</b> ليك واسمه يتقفل على سكوره، غلط = <b>-10</b> ليك',
+      'اللي خلّص اسمه بيفضل ليه دور، بس للريسك أو يعدّي',
+      'تختاروا عدد المباريات (1، 3، 5، 10). في كل مباراة كل لاعب يحط الأسماء مرة',
+      'في الآخر الأعلى سكور يكسب 🏆، ولو تعادل تختاروا: تكتفوا بالتعادل أو <b>جولة إضافية ⚔️</b>'],
+    pickCat: 'اختار القسم', soloInfo: '5 مستويات من السهل للصعب. السكور بيتجمع من كلهم.', start: 'ابدأ 🚀',
+    perfect: '👑 من غير ولا غلطة!', bravo: '🎉 برافو!', boxFull: '😅 الصندوق اتملى', thisScore: 'سكور ده:',
+    finalBtn: 'النتيجة النهائية 🏁', nextLevel: 'المستوى اللي بعده ←', level: (i, n) => `مستوى ${i}/${n}`, score: 'السكور',
+    iKnow: 'أعرف الاسم! 🎯', hint: 'تلميح 💡', finalScore: 'السكور النهائي', newRecord: 'رقم قياسي جديد ليك! 🔥', yourBest: 'أحسن سكور ليك:',
+    again: 'العب تاني', homeBtn: 'الرئيسية',
+    right: '✓ صح', notIn: '✗ مش موجود -1', sayAll: '🎯 قول الاسم كله', sayAllWarn: `لو غلط = ${B('-10')} وتكمّل لعب عادي.`,
+    typeName: 'اكتب الاسم...', confirm: 'تأكيد', cancel: 'إلغاء', solveOk: '🎉 صح!', solveBad: '💥 مش هو! -10', sec: 'ث',
+    players: n => `${n} لاعيبة`, noTimer: 'من غير', playerPh: i => `اسم اللاعب ${i}`, defName: i => `لاعب ${i}`,
+    numPlayers: 'عدد اللاعيبة', names: 'الأسماء', whoSets: 'مين يحط الأسماء؟', setTurns: '✍️ اللاعيبة بالدور', setAuto: '🎲 اللعبة تختار',
+    roundsAuto: 'عدد الراوندات (الكل بيخمّن في كل راوند)', matches: 'عدد المباريات (في كل مباراة كل لاعب يحط الأسماء مرة)',
+    turnTime: 'وقت كل دور', catAuto: 'القسم', catManual: 'قسم الاقتراحات 🎲 والجولة الإضافية',
+    diff: 'المستوى', lv: {1: '🟢 سهل', 2: '🟡 متوسط', 3: '🔴 صعب', mix: '🎲 متنوع'},
+    diffNote: 'كل اللاعيبة في الراوند الواحد بياخدوا أسماء من نفس المستوى. "متنوع" = كل راوند بمستوى.',
+    sumAuto: m => `اللعبة هتدي كل لاعب اسم مختلف في كل راوند. المجموع: <b>${m} راوند</b>.`,
+    sumManual: (n, tot) => `المباراة = ${n} راوندات (كل لاعب يحط الأسماء مرة). المجموع: <b>${tot} راوند</b>.`,
+    go: 'يلا 🔥', round: (r, n) => `راوند ${r}/${n}`, match: (m, n) => `مباراة ${m}/${n} · `,
+    titleFor: 'اسم لـ', typeTitle: 'اكتب الاسم', setterTurn: n => `🎬 دور ${n} يختار`,
+    setterNote: 'الباقيين يبعدوا عيونهم 👀 صعّبها عليهم عشان سكورهم ينزل! سكورك متجمد الراوند ده 🔒',
+    suggestLv: lv => `اقتراحات 🎲 الراوند ده من مستوى: <b>${lv}</b>`, pickAll: '🎲 اختار للكل', done: 'خلصت ✓', needTitle: n => 'اكتب اسم لـ ' + n,
+    tbTitle: 'جولة إضافية!', titlesSet: 'الأسماء اتحطت!', tbNote: c => `أسماء عشوائية من ${c}. اللي يكسب الجولة دي يكسب الجيم.`,
+    autoNote: c => `اللعبة اختارت اسم لكل واحد من ${c}.`, handPhone: 'سلّم الموبايل للاعيبة.', firstTurn: 'أول دور:', roundLv: 'مستوى الراوند:',
+    letsPlay: 'يلا نلعب 🔥', turnOf: n => 'دور ' + n, timeUp1: '⏰ الوقت خلص! -1', timeUp: '⏰ الوقت خلص', tbHead: '⚔️ جولة إضافية',
+    turnLbl: 'دور:', oneMove: 'حركة واحدة', iKnowMine: 'أعرف اسمي 🎯', risk: 'ريسك 🔥', risk2: 'ريسك 🎯', pass: 'عدّي ⏭', passed: '⏭ عدّى',
+    finishedNote: 'اسمك خلص ✓ ركّز في أسامي الباقيين وارسك عليهم!',
+    adFail: 'الإعلان مش متاح دلوقتي، جرّب تاني بعد شوية', adTitle: '💡 تلميح', ad: '📺 إعلان', adNote: 'في النسخة الحقيقية هيظهر هنا إعلان قصير', adWait: 'استنى… التلميح جاي 😉',
+    riskTitle: '🎯 ريسك!', riskNote: `خمّن اسم لاعب تاني. صح = <b class="score">+5</b> ليك واسمه يتقفل · غلط = ${B('-10')} ليك`,
+    onWho: 'على مين؟', theTitle: 'الاسم', riskGo: 'ريسك! 🔥', riskOk: '🎯 ريسك صح! +5', riskBad: '💥 ريسك غلط! -10',
+    buzzQ: n => `🔔 حد عرف اسم ${n}؟ دوس على اسمك بسرعة!`, buzzOwn: 'هيقول اسمه', buzzRisk: n => 'ريسك على ' + n,
+    buzzOwnNote: `صح = حليت 🎉 · غلط = ${B('-10')}`, buzzRiskNote: `صح = <b class="score">+5</b> ليك · غلط = ${B('-10')} ليك`,
+    buzzMust: 'دوست الجرس يبقى لازم تجاوب، ولو الوقت خلص تتحسب غلط.',
+    buzzOk: (w, own) => `🔔 ${w} عرفه! ${own ? '🎉' : '+5'}`, buzzBad: w => `💥 ${w} غلط! -10`,
+    player: 'اللاعب', thisRound: 'الراوند ده', total: 'المجموع', endTb: 'نهاية الجولة الإضافية', endOf: r => 'نهاية ' + r,
+    finalRes: 'النتيجة النهائية 🏆', nextMatch: 'المباراة اللي بعدها ←', nextRound: 'الراوند اللي بعده ←',
+    tie: 'تعادل!', tiedOn: (n, m) => `${n} متعادلين على <b class="score">${m}</b>.<br>تكتفوا بالتعادل؟ ولا جولة إضافية تحسم؟`, and: ' و ',
+    tbBtn: 'جولة إضافية ⚔️', acceptTie: 'نكتفي بالتعادل 🤝', tiedWin: n => n + ' متعادلين 🤝', won: n => n + ' كسب!', newGame: 'جيم جديد بنفس اللاعيبة 🔁',
+    solvedB: 'حلّها ✓', lostB: 'خسر', stolenB: 'اتاخد ريسك 🎯', wrongNames: 'أسماء غلط:',
+    profilesBtn: '👤 اللاعيبة والمستوى', profilesTitle: '👤 اللاعيبة والمستوى', savedPlayers: 'دوس على اسمك لو لعبت قبل كده:',
+    profilesNote: 'أول مرة تكتب اسمك في الجماعي بيتحفظ هنا، وبعد كده تختاره بضغطة. المستوى بيتحسب من متوسط سكورك في كل اسم (بعد 5 أسماء).',
+    noProfiles: 'لسه مفيش لاعيبة محفوظين. العبوا جماعي واكتبوا أساميكم.', full: 'كل الخانات مليانة',
+    ranks: {new: '🆕 جديد', 1: '🥉 مبتدئ', 2: '🥈 هاوي', 3: '🥇 محترف', 4: '👑 أسطورة'},
+    stGames: 'جيمات', stWins: 'فوز', stTitles: 'أسماء', stAvg: 'متوسط السكور', stPerfect: 'من غير غلطة 👑', stRisk: 'ريسك صح',
+    del: 'مسح', delQ: n => `تمسح ${n} وكل إحصائياته؟`
+  },
+  en: {
+    title: 'Riska', subtitle: 'Guess the Name', tagline: 'Letter by letter… before the wrong box fills up 🔥', langBtn: '🌐 عربي',
+    multi: '⚔️ Multiplayer', solo: '🎯 Solo', how: '📜 How to play', best: 'Your best solo score:', beta: 'Beta · all players share one phone',
+    back: '← Back', exit: '← Exit', next: '→',
+    rulesTitle: 'How to play', multiRulesTitle: 'Multiplayer',
+    rules: [
+      'The title shows as blank slots: one slot per letter, with <b>/</b> between words',
+      'Pick a letter: if it\'s in the title, it appears everywhere it occurs',
+      'If it isn\'t, it goes into the <b>wrong box</b> (10 slots). Each wrong letter = <b>-1</b>',
+      'If the box fills up = <b>-10</b> and you lose the title. Nobody can risk on it',
+      'You can say the whole title any time. Wrong = <b>-10</b> and you keep playing',
+      '<b>Hint 💡</b>: watch a short ad and get a clue with no penalty. Up to 3 per title, in order (movies: year, genre, lead actor). In multiplayer a hint doesn\'t use your turn: take it, then play a letter',
+      'A score of <b>0</b> = solved without a single mistake 👑'],
+    multiRules: [
+      '<b>Players take turns:</b> each round one player picks the titles for everyone else. Their score is <b>frozen</b> that round',
+      '<b>The game picks:</b> everyone guesses every round, each with a different title',
+      '<b>Difficulty:</b> everyone in a round gets titles of the same level (easy, medium, hard)',
+      'Turns rotate: <b>one move</b> per player. Right or wrong, the turn passes',
+      '<b>Buzzer 🔔</b>: after every letter a 3-second bar appears. If you know the title, tap your name fast. The fastest player answers (owner guesses their own title, anyone else risks). No cancelling, and a buzz doesn\'t use anyone\'s turn',
+      'Each turn has a <b>timer</b>. If time runs out before you move = <b>-1</b> ⏰ in the wrong box',
+      '<b>Risk 🎯</b> from the first move: guess another player\'s title. Right = <b>+5</b> for you and their title locks at its score. Wrong = <b>-10</b> for you',
+      'Players who finished their title still get turns, but only to risk or pass',
+      'Choose how many matches to play (1, 3, 5, 10). In each match every player picks titles once',
+      'Highest score wins 🏆. On a tie, choose: accept it or play a <b>tiebreak ⚔️</b>'],
+    pickCat: 'Choose a category', soloInfo: '5 levels, from easy to hard. Your score adds up across all of them.', start: 'Start 🚀',
+    perfect: '👑 Flawless!', bravo: '🎉 Well done!', boxFull: '😅 The box filled up', thisScore: 'Score:',
+    finalBtn: 'Final score 🏁', nextLevel: 'Next level →', level: (i, n) => `Level ${i}/${n}`, score: 'Score',
+    iKnow: 'I know it! 🎯', hint: 'Hint 💡', finalScore: 'Final score', newRecord: 'New personal best! 🔥', yourBest: 'Your best:',
+    again: 'Play again', homeBtn: 'Home',
+    right: '✓ Correct', notIn: '✗ Not there -1', sayAll: '🎯 Say the whole title', sayAllWarn: `Wrong = ${B('-10')} and you keep playing.`,
+    typeName: 'Type the title...', confirm: 'Confirm', cancel: 'Cancel', solveOk: '🎉 Correct!', solveBad: '💥 Nope! -10', sec: 's',
+    players: n => `${n} players`, noTimer: 'None', playerPh: i => `Player ${i} name`, defName: i => `Player ${i}`,
+    numPlayers: 'Number of players', names: 'Names', whoSets: 'Who picks the titles?', setTurns: '✍️ Players take turns', setAuto: '🎲 The game picks',
+    roundsAuto: 'Rounds (everyone guesses every round)', matches: 'Matches (in each match every player picks once)',
+    turnTime: 'Time per turn', catAuto: 'Category', catManual: 'Category for 🎲 suggestions and tiebreaks',
+    diff: 'Difficulty', lv: {1: '🟢 Easy', 2: '🟡 Medium', 3: '🔴 Hard', mix: '🎲 Mixed'},
+    diffNote: 'Everyone in a round gets titles of the same level. "Mixed" = a level per round.',
+    sumAuto: m => `The game gives each player a different title every round. Total: <b>${m} rounds</b>.`,
+    sumManual: (n, tot) => `One match = ${n} rounds (each player picks once). Total: <b>${tot} rounds</b>.`,
+    go: 'Let\'s go 🔥', round: (r, n) => `Round ${r}/${n}`, match: (m, n) => `Match ${m}/${n} · `,
+    titleFor: 'Title for', typeTitle: 'Type a title', setterTurn: n => `🎬 ${n} picks`,
+    setterNote: 'Everyone else, look away 👀 Make it tough so their scores drop! Your score is frozen this round 🔒',
+    suggestLv: lv => `🎲 suggestions this round are: <b>${lv}</b>`, pickAll: '🎲 Pick for everyone', done: 'Done ✓', needTitle: n => 'Enter a title for ' + n,
+    tbTitle: 'Tiebreak!', titlesSet: 'Titles are set!', tbNote: c => `Random titles from ${c}. Whoever wins this round wins the game.`,
+    autoNote: c => `The game picked a title for each player from ${c}.`, handPhone: 'Pass the phone to the players.', firstTurn: 'First turn:', roundLv: 'Round level:',
+    letsPlay: 'Let\'s play 🔥', turnOf: n => n + '\'s turn', timeUp1: '⏰ Time\'s up! -1', timeUp: '⏰ Time\'s up', tbHead: '⚔️ Tiebreak',
+    turnLbl: 'Turn:', oneMove: 'One move', iKnowMine: 'I know mine 🎯', risk: 'Risk 🔥', risk2: 'Risk 🎯', pass: 'Pass ⏭', passed: '⏭ Passed',
+    finishedNote: 'Your title is done ✓ Watch the others and risk on them!',
+    adFail: 'No ad available right now, try again in a bit', adTitle: '💡 Hint', ad: '📺 Ad', adNote: 'A short ad will play here in the real version', adWait: 'Hold on… your hint is coming 😉',
+    riskTitle: '🎯 Risk!', riskNote: `Guess another player's title. Right = <b class="score">+5</b> for you and their title locks · Wrong = ${B('-10')} for you`,
+    onWho: 'On who?', theTitle: 'Title', riskGo: 'Risk! 🔥', riskOk: '🎯 Risk paid off! +5', riskBad: '💥 Risk failed! -10',
+    buzzQ: n => `🔔 Anyone know ${n}'s title? Tap your name fast!`, buzzOwn: 'guesses their title', buzzRisk: n => 'risks on ' + n,
+    buzzOwnNote: `Right = solved 🎉 · Wrong = ${B('-10')}`, buzzRiskNote: `Right = <b class="score">+5</b> for you · Wrong = ${B('-10')} for you`,
+    buzzMust: 'You buzzed, so you must answer. Running out of time counts as wrong.',
+    buzzOk: (w, own) => `🔔 ${w} got it! ${own ? '🎉' : '+5'}`, buzzBad: w => `💥 ${w} was wrong! -10`,
+    player: 'Player', thisRound: 'This round', total: 'Total', endTb: 'End of tiebreak', endOf: r => 'End of ' + r,
+    finalRes: 'Final results 🏆', nextMatch: 'Next match →', nextRound: 'Next round →',
+    tie: 'It\'s a tie!', tiedOn: (n, m) => `${n} are tied on <b class="score">${m}</b>.<br>Accept the tie, or play a tiebreak?`, and: ' & ',
+    tbBtn: 'Tiebreak ⚔️', acceptTie: 'Accept the tie 🤝', tiedWin: n => n + ' tie 🤝', won: n => n + ' wins!', newGame: 'New game, same players 🔁',
+    solvedB: 'Solved ✓', lostB: 'Lost', stolenB: 'Risked 🎯', wrongNames: 'Wrong guesses:',
+    profilesBtn: '👤 Players & levels', profilesTitle: '👤 Players & levels', savedPlayers: 'Played before? Tap your name:',
+    profilesNote: 'The first time you type your name in multiplayer it\'s saved here, then you pick it with one tap. Your level comes from your average score per title (after 5 titles).',
+    noProfiles: 'No saved players yet. Play multiplayer and type your names.', full: 'All slots are full',
+    ranks: {new: '🆕 New', 1: '🥉 Beginner', 2: '🥈 Amateur', 3: '🥇 Pro', 4: '👑 Legend'},
+    stGames: 'Games', stWins: 'Wins', stTitles: 'Titles', stAvg: 'Avg score', stPerfect: 'Flawless 👑', stRisk: 'Risks won',
+    del: 'Delete', delQ: n => `Delete ${n} and all their stats?`
+  }
+};
+function t(k, ...a){ const v = (T[LANG] || T.ar)[k] ?? T.ar[k]; return typeof v === 'function' ? v(...a) : v; }
+// نص فيه نسختين "عربي~English": بيرجع النسخة اللي على لغة الواجهة
+const pickLang = s => String(s).includes('~') ? String(s).split('~')[LANG === 'en' ? 1 : 0].trim() : s;
+function applyLang(){ document.documentElement.lang = LANG; document.documentElement.dir = LANG === 'ar' ? 'rtl' : 'ltr'; document.title = t('title') + ': ' + t('subtitle'); }
+function toggleLang(){ LANG = LANG === 'ar' ? 'en' : 'ar'; try { localStorage.setItem('gtn_lang', LANG); } catch(e){} applyLang(); sfx('tap'); home(); }
+
+// ================= المحتوى =================
+// كل سطر: الاسم|تلميح 1|تلميح 2|تلميح 3|المستوى  (المستوى: 1 سهل، 2 متوسط، 3 صعب)
+// التلميح ممكن يبقى "عربي~English" عشان يظهر على حسب لغة الواجهة
+const L_FILM = {ar: ['📅 سنة الإنتاج', '🎭 نوعه', '⭐ البطل'], en: ['📅 Year', '🎭 Genre', '⭐ Lead']};
+const L_SONG = {ar: ['📅 الفترة', '🎶 نوعها', '🎤 المطرب'], en: ['📅 Era', '🎶 Style', '🎤 Singer']};
+const L_PEOPLE = {ar: ['💼 المجال', '🌍 البلد', '🏆 أشهر عمل'], en: ['💼 Field', '🌍 Country', '🏆 Known for']};
+const RAW = {
+  ar: {name: {ar: '🎬 أفلام عربي', en: '🎬 Arabic Movies'}, labels: L_FILM, items: `الأستاذة فاطمة|1952|كوميديا عن محامية شابة|فاتن حمامة|3
+الكيت كات|1991|كوميديا عن شيخ كفيف في حي شعبي|محمود عبد العزيز|2
+العار|1982|دراما عائلية عن تجارة ممنوعة|نور الشريف|2
+الإرهاب والكباب|1992|كوميديا جوه مجمع حكومي|عادل إمام|1
+صعيدي في الجامعة الأمريكية|1998|كوميديا عن طالب صعيدي في القاهرة|محمد هنيدي|1
+اللمبي|2002|كوميديا شعبية|محمد سعد|1
+الناظر|2000|كوميديا عن مدرسة|علاء ولي الدين|1
+عسل أسود|2010|كوميديا عن مصري راجع من أمريكا|أحمد حلمي|1
+الفيل الأزرق|2014|إثارة نفسية في مستشفى|كريم عبد العزيز|1
+الجزيرة|2007|أكشن في الصعيد|أحمد السقا|1
+إبراهيم الأبيض|2009|أكشن في الحواري الشعبية|أحمد السقا|2
+باب الحديد|1958|دراما في محطة قطار|فريد شوقي|3
+الزوجة الثانية|1967|كوميديا ريفية عن عمدة ظالم|سعاد حسني|2
+شيء من الخوف|1969|دراما عن عصابة بتحكم قرية|شادية|2
+الأرض|1970|دراما عن الفلاحين وأرضهم|محمود المليجي|3
+البريء|1986|دراما عن عسكري بسيط|أحمد زكي|2
+الكرنك|1975|دراما سياسية عن طلبة جامعة|سعاد حسني|3
+أرض الخوف|2000|دراما عن ضابط متخفي|أحمد زكي|2
+تيتو|2004|أكشن وجريمة|أحمد السقا|2
+اللص والكلاب|1962|دراما عن لص خارج من السجن عايز ينتقم|شكري سرحان|3
+بين القصرين|1964|دراما عائلية من رواية لنجيب محفوظ|يحيى شاهين|3
+رد قلبي|1957|رومانسية عن ابن جنايني وبنت باشا|شكري سرحان|2
+دعاء الكروان|1959|دراما عن الحب والانتقام|فاتن حمامة|3
+ابن حميدو|1957|كوميديا بحرية|إسماعيل ياسين|2
+إشاعة حب|1960|كوميديا رومانسية|عمر الشريف|2
+غزل البنات|1949|كوميديا موسيقية عن مدرس لغة عربية|نجيب الريحاني|3
+ثرثرة فوق النيل|1971|دراما عن سهرات في عوامة|عماد حمدي|3
+الحفيد|1974|كوميديا عائلية|عبد المنعم مدبولي|2
+أم العروسة|1963|كوميديا عائلية عن تجهيز فرح|عماد حمدي|3
+مطب صناعي|2006|كوميديا|أحمد حلمي|2
+عمارة يعقوبيان|2006|دراما عن سكان عمارة في وسط البلد|عادل إمام|2
+كده رضا|2007|كوميديا عن تلات توائم|أحمد حلمي|1
+ولاد رزق|2015|أكشن عن عصابة إخوات|أحمد عز|1
+الممر|2019|فيلم حربي|أحمد عز|1
+الكنز|2017|تاريخي وفانتازيا|محمد سعد|2
+هي فوضى|2007|دراما عن أمين شرطة فاسد|خالد صالح|2
+جعلتني مجرما|2006|كوميديا|أحمد حلمي|2
+السفارة في العمارة|2005|كوميديا سياسية|عادل إمام|1
+بوحة|2005|كوميديا عن جزار|محمد سعد|1
+همام في أمستردام|1999|كوميديا عن شاب مسافر هولندا|محمد هنيدي|1
+صايع بحر|2004|كوميديا|أحمد حلمي|2
+مافيا|2002|أكشن|أحمد السقا|2
+الجوع|1986|دراما عن فتوات الحارة|محمود عبد العزيز|3
+الحريف|1983|دراما عن لاعب كورة شوارع|عادل إمام|3
+الكيف|1985|كوميديا عن عالم الكيف|محمود عبد العزيز|2
+النوم في العسل|1996|كوميديا اجتماعية|عادل إمام|2
+طيور الظلام|1995|دراما سياسية|عادل إمام|2
+المنسي|1993|دراما عن عامل سكة حديد|عادل إمام|2
+اللعب مع الكبار|1991|دراما عن شاب بيبلّغ عن جرايم|عادل إمام|3
+الواد محروس بتاع الوزير|1999|كوميديا سياسية|عادل إمام|2
+عريس من جهة أمنية|2004|كوميديا عن حما ضابط|عادل إمام|2
+مرجان أحمد مرجان|2007|كوميديا عن رجل أعمال|عادل إمام|1
+حسن و مرقص|2008|كوميديا عن الوحدة الوطنية|عادل إمام|2
+الإنس والجن|1985|رعب|عادل إمام|2
+زكي شان|2005|كوميديا أكشن|أحمد حلمي|2
+آسف على الإزعاج|2008|دراما نفسية|أحمد حلمي|1
+ألف مبروك|2009|كوميديا عن يوم بيتكرر|أحمد حلمي|1
+بلبل حيران|2010|كوميديا رومانسية|أحمد حلمي|2
+إكس لارج|2011|كوميديا عن شاب تخين|أحمد حلمي|1
+عبود على الحدود|1999|كوميديا عسكرية|علاء ولي الدين|2
+اللي بالي بالك|2003|كوميديا|محمد سعد|1
+عوكل|2004|كوميديا|محمد سعد|2
+الباشا تلميذ|2004|كوميديا عن ضابط في الجامعة|كريم عبد العزيز|2
+واحد من الناس|2006|دراما وأكشن|كريم عبد العزيز|2
+أبو علي|2005|أكشن رومانسي|كريم عبد العزيز|2
+كيرة والجن|2022|تاريخي عن مقاومة الإنجليز|كريم عبد العزيز|1
+ابن القنصل|2010|كوميديا عن نصاب|أحمد السقا|2
+تراب الماس|2018|إثارة وجريمة|آسر ياسين|2
+يوم مر و يوم حلو|1988|دراما عائلية|فاتن حمامة|3
+الإسكندرية ليه|1979|سيرة ذاتية ليوسف شاهين|محسن محيي الدين|3
+المومياء|1969|دراما عن سرقة الآثار|أحمد مرعي|3
+الناصر صلاح الدين|1963|تاريخي|أحمد مظهر|2
+وا إسلاماه|1961|تاريخي|أحمد مظهر|3
+خلي بالك من زوزو|1972|موسيقي عن طالبة جامعية|سعاد حسني|2
+عفريت مراتي|1968|كوميديا|صلاح ذو الفقار|3`},
+  en: {name: {ar: '🎬 أفلام إنجليزي', en: '🎬 English Movies'}, labels: L_FILM, items: `TITANIC|1997|رومانسية على سفينة بتغرق~Romance on a sinking ship|Leonardo DiCaprio|1
+INCEPTION|2010|خيال علمي عن سرقة الأحلام~Sci-fi about stealing dreams|Leonardo DiCaprio|2
+THE GODFATHER|1972|جريمة عن عيلة مافيا~Crime saga of a mafia family|Marlon Brando|2
+AVATAR|2009|خيال علمي على كوكب تاني~Sci-fi on another planet|Sam Worthington|1
+JAWS|1975|رعب عن سمكة قرش~Thriller about a killer shark|Roy Scheider|3
+GLADIATOR|2000|تاريخي عن مصارع روماني~Epic about a Roman gladiator|Russell Crowe|2
+THE MATRIX|1999|خيال علمي عن عالم افتراضي~Sci-fi about a simulated world|Keanu Reeves|1
+FROZEN|2013|أنيميشن عن أختين وملكة الجليد~Animated tale of two sisters and an ice queen|صوت Idina Menzel~Voice of Idina Menzel|1
+ROCKY|1976|رياضي عن ملاكم~Sports drama about a boxer|Sylvester Stallone|1
+TOY STORY|1995|أنيميشن عن لعب أطفال بتتكلم~Animated film about toys that talk|صوت Tom Hanks~Voice of Tom Hanks|1
+JURASSIC PARK|1993|مغامرة عن ديناصورات~Adventure with dinosaurs|Sam Neill|2
+THE LION KING|1994|أنيميشن عن أسد صغير~Animated film about a lion cub|أنيميشن ديزني~Disney animation|1
+FORREST GUMP|1994|دراما عن راجل طيب عاش أحداث كبيرة~Drama about a kind man who lives through big events|Tom Hanks|2
+INTERSTELLAR|2014|خيال علمي عن رحلة في الفضاء~Sci-fi journey through space|Matthew McConaughey|2
+BACK TO THE FUTURE|1985|خيال علمي عن السفر عبر الزمن~Sci-fi comedy about time travel|Michael J. Fox|3
+STAR WARS|1977|خيال علمي عن حرب في الفضاء~Sci-fi war in space|Mark Hamill|1
+THE DARK KNIGHT|2008|أكشن عن بطل خارق ضد الجوكر~Superhero action against the Joker|Christian Bale|2
+FINDING NEMO|2003|أنيميشن عن سمكة صغيرة تايهة~Animated film about a lost little fish|أنيميشن بيكسار~Pixar animation|1
+PULP FICTION|1994|جريمة بقصص متداخلة~Crime film with interwoven stories|John Travolta|3
+HOME ALONE|1990|كوميديا عن طفل لوحده في البيت~Comedy about a kid left home alone|Macaulay Culkin|1
+THE SHAWSHANK REDEMPTION|1994|دراما عن سجين بريء~Drama about an innocent prisoner|Tim Robbins|2
+SPIDER-MAN|2002|بطل خارق بيطلع على الحيطان~Superhero who climbs walls|Tobey Maguire|1
+THE AVENGERS|2012|فريق أبطال خارقين~A team of superheroes|Robert Downey Jr.|1
+IRON MAN|2008|ملياردير بيعمل بدلة حديد~A billionaire builds an iron suit|Robert Downey Jr.|1
+SHREK|2001|أنيميشن عن غول أخضر~Animated film about a green ogre|صوت Mike Myers~Voice of Mike Myers|1
+ALADDIN|1992|أنيميشن عن مصباح سحري~Animated film about a magic lamp|أنيميشن ديزني~Disney animation|1
+CARS|2006|أنيميشن عن عربية سباق~Animated film about a race car|أنيميشن بيكسار~Pixar animation|1
+UP|2009|أنيميشن عن بيت طاير ببلالين~Animated film about a house lifted by balloons|أنيميشن بيكسار~Pixar animation|2
+COCO|2017|أنيميشن عن ولد بيحب الموسيقى~Animated film about a boy who loves music|أنيميشن بيكسار~Pixar animation|2
+MOANA|2016|أنيميشن عن بنت بتبحر في المحيط~Animated film about a girl sailing the ocean|أنيميشن ديزني~Disney animation|1
+ZOOTOPIA|2016|أنيميشن عن مدينة حيوانات~Animated film about a city of animals|أنيميشن ديزني~Disney animation|2
+INSIDE OUT|2015|أنيميشن عن المشاعر~Animated film about emotions|أنيميشن بيكسار~Pixar animation|2
+THE INCREDIBLES|2004|أنيميشن عن عيلة أبطال~Animated film about a superhero family|أنيميشن بيكسار~Pixar animation|2
+MADAGASCAR|2005|أنيميشن عن حيوانات هربانة من حديقة~Animated film about zoo animals on the run|أنيميشن دريم ووركس~DreamWorks animation|1
+KUNG FU PANDA|2008|أنيميشن عن باندا بيتعلم كونغ فو~Animated film about a kung fu panda|صوت Jack Black~Voice of Jack Black|1
+ICE AGE|2002|أنيميشن عن العصر الجليدي~Animated film set in the ice age|صوت Ray Romano~Voice of Ray Romano|1
+TOP GUN|1986|أكشن عن طيارين حربيين~Action film about fighter pilots|Tom Cruise|2
+MISSION: IMPOSSIBLE|1996|جاسوسية وأكشن~Spy action|Tom Cruise|1
+THE TERMINATOR|1984|خيال علمي عن روبوت قاتل~Sci-fi about a killer robot|Arnold Schwarzenegger|2
+GHOSTBUSTERS|1984|كوميديا عن صيادين أشباح~Comedy about ghost hunters|Bill Murray|3
+PSYCHO|1960|رعب نفسي في فندق صغير~Psychological horror at a motel|Anthony Perkins|3
+CASABLANCA|1942|رومانسية وقت الحرب~Wartime romance|Humphrey Bogart|3
+FIGHT CLUB|1999|دراما عن نادي قتال سري~Drama about a secret fight club|Brad Pitt|2
+THE SIXTH SENSE|1999|إثارة عن ولد بيشوف الموتى~Thriller about a boy who sees the dead|Bruce Willis|3
+SAVING PRIVATE RYAN|1998|فيلم حربي عن إنقاذ جندي~War film about rescuing a soldier|Tom Hanks|3
+THE GREEN MILE|1999|دراما في سجن~Prison drama|Tom Hanks|3
+JOKER|2019|دراما عن أشهر شرير~Drama about a famous villain|Joaquin Phoenix|1
+OPPENHEIMER|2023|سيرة ذاتية عن عالم~Biopic about a scientist|Cillian Murphy|2
+BARBIE|2023|كوميديا عن عروسة مشهورة~Comedy about a famous doll|Margot Robbie|1
+DUNE|2021|خيال علمي على كوكب صحراوي~Sci-fi on a desert planet|Timothée Chalamet|2
+BLACK PANTHER|2018|بطل خارق من أفريقيا~Superhero from Africa|Chadwick Boseman|2
+DEADPOOL|2016|بطل خارق بيهزر~Wisecracking antihero|Ryan Reynolds|2
+THE FAST AND THE FURIOUS|2001|أكشن وسباق عربيات~Street racing action|Vin Diesel|1
+PIRATES OF THE CARIBBEAN|2003|مغامرة قراصنة~Pirate adventure|Johnny Depp|1
+THE NOTEBOOK|2004|رومانسية~Romance|Ryan Gosling|2
+LA LA LAND|2016|موسيقي رومانسي~Musical romance|Ryan Gosling|2
+GRAVITY|2013|إثارة في الفضاء~Thriller in space|Sandra Bullock|2
+THE SOCIAL NETWORK|2010|دراما عن إنشاء فيسبوك~Drama about founding Facebook|Jesse Eisenberg|3
+MEMENTO|2000|إثارة عن راجل فاقد الذاكرة~Thriller about a man with memory loss|Guy Pearce|3
+GREASE|1978|موسيقي في مدرسة~High-school musical|John Travolta|3`},
+  enseries: {name: {ar: '📺 مسلسلات إنجليزي', en: '📺 English Series'}, labels: L_FILM, items: `FRIENDS|1994|كوميديا عن ست أصحاب~Sitcom about six friends|Jennifer Aniston|1
+GAME OF THRONES|2011|فانتازيا عن صراع على العرش~Fantasy battle for the throne|Emilia Clarke|1
+BREAKING BAD|2008|دراما عن مدرس كيميا~Drama about a chemistry teacher|Bryan Cranston|1
+STRANGER THINGS|2016|خيال علمي ورعب مع أطفال~Sci-fi horror with kids|Millie Bobby Brown|1
+THE SIMPSONS|1989|كرتون عن عيلة صفرا~Cartoon about a yellow family|صوت Dan Castellaneta~Voice of Dan Castellaneta|1
+PRISON BREAK|2005|إثارة عن هروب من سجن~Thriller about a prison escape|Wentworth Miller|1
+SHERLOCK|2010|بوليسي عن محقق عبقري~Detective drama|Benedict Cumberbatch|2
+LOST|2004|غموض على جزيرة~Mystery on an island|Matthew Fox|2
+THE OFFICE|2005|كوميديا في مكتب~Office comedy|Steve Carell|2
+HOW I MET YOUR MOTHER|2005|كوميديا رومانسية~Romantic sitcom|Josh Radnor|2
+THE CROWN|2016|دراما عن ملكة بريطانيا~Drama about Britain's queen|Claire Foy|2
+SQUID GAME|2021|إثارة عن لعبة قاتلة~Deadly game thriller|Lee Jung-jae|1
+MONEY HEIST|2017|دراما عن سرقة كبيرة~Heist drama|Álvaro Morte|1
+WEDNESDAY|2022|غموض في مدرسة غريبة~Mystery at a strange school|Jenna Ortega|1
+THE WALKING DEAD|2010|رعب عن زومبي~Zombie horror|Andrew Lincoln|2
+DEXTER|2006|إثارة وجريمة~Crime thriller|Michael C. Hall|3
+HOUSE|2004|دراما طبية عن دكتور عبقري~Medical drama about a genius doctor|Hugh Laurie|3
+GREY'S ANATOMY|2005|دراما طبية~Medical drama|Ellen Pompeo|2
+SUITS|2011|دراما عن محامين~Legal drama|Gabriel Macht|2
+PEAKY BLINDERS|2013|جريمة في إنجلترا زمان~Crime in old England|Cillian Murphy|2
+THE BIG BANG THEORY|2007|كوميديا عن علماء~Sitcom about scientists|Jim Parsons|1
+TWO AND A HALF MEN|2003|كوميديا عيلية~Family sitcom|Charlie Sheen|3
+THE SOPRANOS|1999|جريمة عن عيلة مافيا~Mafia crime drama|James Gandolfini|3
+SEINFELD|1989|كوميديا~Sitcom|Jerry Seinfeld|3
+MR BEAN|1990|كوميديا من غير كلام تقريبًا~Almost silent comedy|Rowan Atkinson|1
+THE X-FILES|1993|خيال علمي وغموض~Sci-fi mystery|David Duchovny|3
+THE MANDALORIAN|2019|خيال علمي من عالم حرب النجوم~Star Wars sci-fi|Pedro Pascal|2
+THE LAST OF US|2023|دراما بعد نهاية العالم~Post-apocalyptic drama|Pedro Pascal|2
+TOM AND JERRY|1940|كرتون قط وفار~Cat-and-mouse cartoon|هانا وباربيرا~Hanna-Barbera|1
+SPONGEBOB SQUAREPANTS|1999|كرتون عن إسفنجة~Cartoon about a sea sponge|صوت Tom Kenny~Voice of Tom Kenny|1`},
+  series: {name: {ar: '📺 مسلسلات', en: '📺 Arabic Series'}, labels: L_FILM, items: `ليالي الحلمية|1987|دراما أجيال في حي الحلمية|يحيى الفخراني|2
+رأفت الهجان|1988|جاسوسية|محمود عبد العزيز|2
+الاختيار|2020|دراما عسكرية|أمير كرارة|1
+الكبير أوي|2010|كوميديا صعيدية|أحمد مكي|1
+لن أعيش في جلباب أبي|1996|دراما عن تاجر عصامي|نور الشريف|2
+الضوء الشارد|1998|دراما صعيدية|ممدوح عبد العليم|3
+أرابيسك|1994|دراما عن صنايعي أرابيسك|صلاح السعدني|3
+نسر الصعيد|2018|أكشن صعيدي|محمد رمضان|2
+الأسطورة|2016|أكشن شعبي|محمد رمضان|1
+جعفر العمدة|2023|دراما شعبية|محمد رمضان|1
+يتربى في عزو|2007|كوميديا عن ابن مدلل|يحيى الفخراني|2
+الجماعة|2010|دراما تاريخية سياسية|إياد نصار|3
+باب الحارة|2006|دراما شامية عن حارة في دمشق|عباس النوري|1
+الهيبة|2017|أكشن عن عيلة على الحدود|تيم حسن|1
+طاش ما طاش|1993|كوميديا سعودية|ناصر القصبي|1
+الزير سالم|2000|تاريخي عن حرب البسوس|سلوم حداد|2
+التغريبة الفلسطينية|2004|دراما عن نكبة فلسطين|جمال سليمان|2
+ضيعة ضايعة|2008|كوميديا سورية في قرية|باسم ياخور|2
+بقعة ضوء|2001|كوميديا سورية اسكتشات|أيمن رضا|3
+درب الزلق|1977|كوميديا كويتية|عبد الحسين عبد الرضا|2
+سيلفي|2015|كوميديا سعودية|ناصر القصبي|2
+العربجي|2023|دراما شامية|باسم ياخور|3
+المال والبنون|1993|دراما عن أخين|أحمد عبد العزيز|2
+زيزينيا|1997|دراما في إسكندرية|يحيى الفخراني|3
+حديث الصباح والمساء|2001|دراما من رواية لنجيب محفوظ|ليلى علوي|3
+عائلة الحاج متولي|2001|دراما عن تاجر متجوز أربعة|نور الشريف|1
+سابع جار|2017|دراما عن سكان عمارة|دلال عبد العزيز|2
+لعبة نيوتن|2021|دراما عن زوجين في أمريكا|منى زكي|2
+ريا و سكينة|2005|جريمة تاريخية|عبلة كامل|1
+الأب الروحي|2017|جريمة|محمود حميدة|2
+ابن حلال|2014|دراما شعبية|محمد رمضان|2
+تحت السيطرة|2015|دراما عن الإدمان|نيللي كريم|2`},
+  songs: {name: {ar: '🎵 أغاني عربي', en: '🎵 Arabic Songs'}, labels: L_SONG, items: `تملي معاك|أوائل الألفينات|رومانسية|عمرو دياب|1
+نور العين|التسعينات|بوب انتشرت في العالم كله|عمرو دياب|1
+قمرين|التسعينات|رومانسية|عمرو دياب|2
+ميال|الثمانينات|بوب|عمرو دياب|2
+أهواك|زمن الفن الجميل|رومانسية|عبد الحليم حافظ|2
+أنت عمري|الستينات|طرب من ألحان عبد الوهاب|أم كلثوم|1
+ألف ليلة و ليلة|الستينات|طرب|أم كلثوم|2
+الأطلال|الستينات|طرب من شعر إبراهيم ناجي|أم كلثوم|2
+سواح|زمن الفن الجميل|طرب|عبد الحليم حافظ|2
+زي الهوا|السبعينات|طرب|عبد الحليم حافظ|3
+قارئة الفنجان|السبعينات|من شعر نزار قباني|عبد الحليم حافظ|1
+على حسب وداد|زمن الفن الجميل|شعبي خفيف|عبد الحليم حافظ|3
+بشرة خير|العقد التاني من الألفينات|أغنية حماسية|حسين الجسمي|1
+سيرة الحب|الستينات|طرب|أم كلثوم|3
+فكروني|الستينات|طرب|أم كلثوم|3
+حبيتك بالصيف|زمن الفن الجميل|أغنية لبنانية|فيروز|3
+نسم علينا الهوا|زمن الفن الجميل|أغنية لبنانية|فيروز|2
+يا مسهرني|السبعينات|طرب|أم كلثوم|3
+ثلاث دقات|العقد التاني من الألفينات|أغنية أفراح مرحة|أبو|1
+أنا لحبيبي|زمن الفن الجميل|أغنية لبنانية|فيروز|3
+لسه فاكر|الستينات|طرب|أم كلثوم|3
+حب إيه|الستينات|طرب|أم كلثوم|2
+يا ليلة العيد|زمن الفن الجميل|أغنية العيد|أم كلثوم|1
+رمضان جانا|زمن الفن الجميل|أغنية رمضان|محمد عبد المطلب|1
+وحوي يا وحوي|زمن الفن الجميل|أغنية رمضان|أحمد عبد القادر|1
+حلوة يا بلدي|السبعينات|أغنية عن مصر|داليدا|1
+زي العسل|زمن الفن الجميل|أغنية خفيفة|صباح|2
+أما براوة|زمن الفن الجميل|طرب|نجاة|3
+ليلي نهاري|أوائل الألفينات|رومانسية|عمرو دياب|2
+الحلم العربي|التسعينات|أوبريت عربي|مجموعة مطربين عرب|2
+بتونس بيك|التسعينات|أغنية خفيفة|وردة|2
+حرمت أحبك|الثمانينات|طرب|وردة|3
+بنت الجيران|العقد التاني من الألفينات|مهرجانات|حسن شاكوش|1`},
+  ensongs: {name: {ar: '🎵 أغاني إنجليزي', en: '🎵 English Songs'}, labels: L_SONG, items: `SHAPE OF YOU|2017|بوب~Pop|Ed Sheeran|1
+BOHEMIAN RHAPSODY|1975|روك~Rock|Queen|2
+HELLO|2015|بالاد حزينة~Sad ballad|Adele|1
+THRILLER|1982|بوب ورقص~Dance pop|Michael Jackson|2
+IMAGINE|1971|بالاد عن السلام~Ballad about peace|John Lennon|2
+YESTERDAY|1965|بالاد هادية~Gentle ballad|The Beatles|2
+BAD GUY|2019|بوب~Pop|Billie Eilish|1
+DESPACITO|2017|لاتيني~Latin pop|Luis Fonsi|1
+HOTEL CALIFORNIA|1976|روك~Rock|Eagles|3
+BILLIE JEAN|الثمانينات~1980s|بوب ورقص~Dance pop|Michael Jackson|2
+HAPPY|2013|بوب مرح~Upbeat pop|Pharrell Williams|1
+ROLLING IN THE DEEP|2010|سول~Soul|Adele|3
+BLINDING LIGHTS|2019|بوب~Pop|The Weeknd|2
+SMELLS LIKE TEEN SPIRIT|1991|روك~Rock|Nirvana|3
+DANCING QUEEN|1976|ديسكو~Disco|ABBA|3
+UPTOWN FUNK|2014|فانك~Funk pop|Mark Ronson & Bruno Mars|1
+SOMEONE LIKE YOU|2011|بالاد~Ballad|Adele|2
+LET IT GO|2013|أغنية فيلم أنيميشن~Animated movie song|Idina Menzel|1
+WE WILL ROCK YOU|1977|روك~Rock|Queen|1
+WE ARE THE CHAMPIONS|1977|روك~Rock|Queen|2
+BEAT IT|الثمانينات~1980s|بوب روك~Pop rock|Michael Jackson|2
+MY HEART WILL GO ON|1997|أغنية فيلم تايتانك~Titanic theme song|Celine Dion|1
+I WILL ALWAYS LOVE YOU|1992|بالاد~Ballad|Whitney Houston|2
+BABY|2010|بوب~Pop|Justin Bieber|1
+SORRY|2015|بوب~Pop|Justin Bieber|2
+PERFECT|2017|بالاد رومانسية~Romantic ballad|Ed Sheeran|2
+THINKING OUT LOUD|2014|بالاد~Ballad|Ed Sheeran|2
+GANGNAM STYLE|2012|كي-بوب~K-pop|PSY|1
+LOSE YOURSELF|2002|راب~Rap|Eminem|2
+IN THE END|2001|روك~Rock|Linkin Park|2
+NUMB|2003|روك~Rock|Linkin Park|2
+BELIEVER|2017|روك~Rock|Imagine Dragons|1
+RADIOACTIVE|2012|روك~Rock|Imagine Dragons|2
+CHEAP THRILLS|2016|بوب~Pop|Sia|2
+CHANDELIER|2014|بوب~Pop|Sia|2
+HALO|2008|بوب~Pop|Beyoncé|2
+SHAKE IT OFF|2014|بوب~Pop|Taylor Swift|1
+LOVE STORY|2008|كانتري بوب~Country pop|Taylor Swift|2
+WAKA WAKA|2010|أغنية كاس العالم~World Cup song|Shakira|1
+HIPS DON'T LIE|2006|لاتيني~Latin pop|Shakira|2
+LET IT BE|1970|بالاد~Ballad|The Beatles|2
+HEY JUDE|1968|روك~Rock|The Beatles|3
+STAYIN' ALIVE|1977|ديسكو~Disco|Bee Gees|3
+SWEET CHILD O' MINE|1987|روك~Rock|Guns N' Roses|3
+EYE OF THE TIGER|1982|روك~Rock|Survivor|2`},
+  people: {name: {ar: '⭐ شخصيات عربية', en: '⭐ Arab Famous People'}, labels: L_PEOPLE, items: `أم كلثوم|مطربة|مصر|الأطلال|1
+عبد الحليم حافظ|مطرب وممثل|مصر|قارئة الفنجان|1
+محمد صلاح|لاعب كورة|مصر|ليفربول|1
+نجيب محفوظ|كاتب|مصر|جايزة نوبل للأدب|2
+عادل إمام|ممثل كوميدي|مصر|الإرهاب والكباب|1
+فاتن حمامة|ممثلة|مصر|دعاء الكروان|2
+سعاد حسني|ممثلة|مصر|خلي بالك من زوزو|2
+أحمد زكي|ممثل|مصر|البريء|2
+فيروز|مطربة|لبنان|نسم علينا الهوا|1
+عمر الشريف|ممثل عالمي|مصر|لورنس العرب|2
+محمد عبد الوهاب|موسيقار ومطرب|مصر|لحّن أنت عمري|3
+إسماعيل ياسين|ممثل كوميدي|مصر|ابن حميدو|2
+شادية|مطربة وممثلة|مصر|شيء من الخوف|3
+نور الشريف|ممثل|مصر|لن أعيش في جلباب أبي|2
+محمود عبد العزيز|ممثل|مصر|الكيت كات|3
+يحيى الفخراني|ممثل|مصر|ليالي الحلمية|3
+محمد منير|مطرب|مصر|لقبه الملك|2
+عمرو دياب|مطرب|مصر|نور العين|1
+زكي رستم|ممثل|مصر|اشتهر بأدوار الشر|3
+يوسف شاهين|مخرج|مصر|باب الحديد|3
+نانسي عجرم|مطربة|لبنان|أخاصمك آه|1
+محمد عبده|مطرب|السعودية|لقبه فنان العرب|1
+كاظم الساهر|مطرب|العراق|لقبه قيصر الأغنية العربية|1
+راغب علامة|مطرب|لبنان|لقبه سوبر ستار|2
+وردة|مطربة|الجزائر|بتونس بيك|2
+نزار قباني|شاعر|سوريا|قارئة الفنجان|2
+محمود درويش|شاعر|فلسطين|سجل أنا عربي|2
+أحمد شوقي|شاعر|مصر|لقبه أمير الشعراء|2
+طه حسين|كاتب|مصر|لقبه عميد الأدب العربي|3
+أحمد زويل|عالم|مصر|جايزة نوبل في الكيمياء|2
+مجدي يعقوب|جراح قلب|مصر|لقبه ملك القلوب|2
+رياض محرز|لاعب كورة|الجزائر|مانشستر سيتي|1
+محمد أبو تريكة|لاعب كورة|مصر|الأهلي|1
+ناصر القصبي|ممثل|السعودية|طاش ما طاش|2
+دريد لحام|ممثل|سوريا|شخصية غوار الطوشة|2
+عبد الحسين عبد الرضا|ممثل|الكويت|درب الزلق|3`},
+  enpeople: {name: {ar: '⭐ شخصيات عالمية', en: '⭐ World Famous People'}, labels: L_PEOPLE, items: `LIONEL MESSI|لاعب كورة~Footballer|الأرجنتين~Argentina|برشلونة~Barcelona|1
+CRISTIANO RONALDO|لاعب كورة~Footballer|البرتغال~Portugal|ريال مدريد~Real Madrid|1
+ALBERT EINSTEIN|عالم فيزياء~Physicist|ألمانيا~Germany|النظرية النسبية~Theory of relativity|1
+MICHAEL JACKSON|مطرب~Singer|أمريكا~USA|لقبه ملك البوب~The King of Pop|1
+MUHAMMAD ALI|ملاكم~Boxer|أمريكا~USA|لقبه الأعظم~The Greatest|1
+WILLIAM SHAKESPEARE|كاتب مسرحي~Playwright|إنجلترا~England|روميو وجولييت~Romeo and Juliet|2
+LEONARDO DA VINCI|رسام ومخترع~Painter and inventor|إيطاليا~Italy|الموناليزا~Mona Lisa|2
+STEVE JOBS|رجل أعمال~Entrepreneur|أمريكا~USA|آبل~Apple|1
+BILL GATES|رجل أعمال~Entrepreneur|أمريكا~USA|مايكروسوفت~Microsoft|1
+ELON MUSK|رجل أعمال~Entrepreneur|أمريكا~USA|تسلا~Tesla|1
+NELSON MANDELA|زعيم سياسي~Political leader|جنوب أفريقيا~South Africa|النضال ضد العنصرية~Fight against apartheid|2
+CHARLIE CHAPLIN|ممثل كوميدي~Comedian|إنجلترا~England|الأفلام الصامتة~Silent films|2
+MARILYN MONROE|ممثلة~Actress|أمريكا~USA|نجمة الخمسينات~1950s film star|3
+ELVIS PRESLEY|مطرب~Singer|أمريكا~USA|لقبه ملك الروك~The King of Rock and Roll|2
+BRUCE LEE|ممثل وفنون قتالية~Actor and martial artist|هونج كونج وأمريكا~Hong Kong & USA|الكونغ فو~Kung fu|1
+JACKIE CHAN|ممثل أكشن~Action actor|هونج كونج~Hong Kong|كونغ فو وكوميديا~Kung fu comedy|1
+PELE|لاعب كورة~Footballer|البرازيل~Brazil|3 كاسات عالم~3 World Cups|1
+DIEGO MARADONA|لاعب كورة~Footballer|الأرجنتين~Argentina|كاس العالم 1986~1986 World Cup|2
+USAIN BOLT|عداء~Sprinter|جامايكا~Jamaica|أسرع إنسان~Fastest man alive|1
+MICHAEL JORDAN|لاعب سلة~Basketball player|أمريكا~USA|شيكاغو بولز~Chicago Bulls|2
+SERENA WILLIAMS|لاعبة تنس~Tennis player|أمريكا~USA|23 بطولة جراند سلام~23 Grand Slam titles|2
+ISAAC NEWTON|عالم~Scientist|إنجلترا~England|الجاذبية~Gravity|2
+MARIE CURIE|عالمة~Scientist|بولندا وفرنسا~Poland & France|الإشعاع~Radioactivity|3
+THOMAS EDISON|مخترع~Inventor|أمريكا~USA|اللمبة~The light bulb|2
+WALT DISNEY|منتج أفلام~Film producer|أمريكا~USA|ميكي ماوس~Mickey Mouse|2
+TAYLOR SWIFT|مطربة~Singer|أمريكا~USA|شيك إت أوف~Shake It Off|1
+ADELE|مطربة~Singer|إنجلترا~England|هالو~Hello|1
+TOM HANKS|ممثل~Actor|أمريكا~USA|فورست جامب~Forrest Gump|2
+OPRAH WINFREY|مذيعة~TV host|أمريكا~USA|برنامج أوبرا~The Oprah Winfrey Show|2
+NIKOLA TESLA|مخترع~Inventor|صربيا وأمريكا~Serbia & USA|التيار المتردد~Alternating current|3`}
+};
+const CATS = {}, HINTS = {};
+for (const k in RAW) {
+  const c = RAW[k], items = [];
+  c.items.split('\n').forEach(line => {
+    const f = line.split('|').map(x => x.trim()); if (!f[0]) return;
+    const lv = /^[123]$/.test(f[f.length - 1]) ? +f.pop() : 2;
+    const [title, ...h] = f;
+    items.push({t: title, lv}); HINTS[flatKey(title)] = {h, labels: c.labels};
+  });
+  CATS[k] = {name: c.name, items};
+}
+const catName = k => CATS[k].name[LANG] || CATS[k].name.ar;
+const defaultCat = () => LANG === 'en' ? 'en' : 'ar';
+function flatKey(s){ return [...String(s).replace(/[ً-ْـٰ]/g, '')].filter(c => /[ء-ي]/.test(c) || /[A-Za-z]/.test(c)).map(c => 'أإآٱ'.includes(c) ? 'ا' : c === 'ى' || c === 'ئ' ? 'ي' : c === 'ؤ' ? 'و' : c === 'ة' ? 'ه' : c.toUpperCase()).join(''); }
+
+// اختيار اسم عشوائي من مستوى معيّن. لو المستوى خلص بياخد من أقرب مستوى ليه.
+function pickTitle(cat, lv, used){
+  const all = CATS[cat].items;
+  let free = all.filter(x => !used.has(x.t)); if (!free.length) free = all;
+  const best = Math.min(...free.map(x => Math.abs(x.lv - lv)));
+  const pool = free.filter(x => Math.abs(x.lv - lv) === best);
+  return pool[Math.floor(Math.random() * pool.length)].t;
+}
+
+// ================= حسابات اللاعيبة (محفوظة على الموبايل دلوقتي) =================
+// في نسخة فيسبوك: الاسم والصورة بييجوا من حساب فيسبوك تلقائي، والإحصائيات بتتحفظ أونلاين.
+const PKEY = 'gtn_profiles';
+let MEM_PROFILES = '[]'; // احتياطي لو المتصفح مانع الحفظ (بيشتغل لحد ما الصفحة تتقفل)
+function loadProfiles(){ let s = MEM_PROFILES; try { s = localStorage.getItem(PKEY) || s; } catch(e){} try { return JSON.parse(s) || []; } catch(e){ return []; } }
+function saveProfiles(a){ MEM_PROFILES = JSON.stringify(a); try { localStorage.setItem(PKEY, MEM_PROFILES); } catch(e){} }
+const pkey = n => String(n).trim().toLowerCase();
+function ensureProfile(name){
+  const a = loadProfiles(); if (a.some(x => pkey(x.name) === pkey(name))) return;
+  a.push({name: name.trim(), games: 0, wins: 0, titles: 0, solved: 0, perfect: 0, sumPen: 0, riskOk: 0, riskBad: 0, last: Date.now()}); saveProfiles(a);
+}
+function updateProfile(name, fn){ if (!name) return; const a = loadProfiles(), p = a.find(x => pkey(x.name) === pkey(name)); if (!p) return; fn(p); p.last = Date.now(); saveProfiles(a); }
+// المستوى: من متوسط السكور لكل اسم (0 أحسن حاجة). محتاج 5 أسماء على الأقل.
+function rankOf(p){ if (!p || p.titles < 5) return 'new'; const avg = p.sumPen / p.titles; return avg >= -2 ? 4 : avg >= -4 ? 3 : avg >= -6 ? 2 : 1; }
+const rankLabel = p => t('ranks')[rankOf(p)];
+function statRisk(pi, ok){ const pl = S.players && S.players[pi]; if (pl) updateProfile(pl.prof, p => { if (ok) p.riskOk++; else p.riskBad++; }); }
+
+const app = document.getElementById('app');
+let S = {};
+
+// ---------- helpers ----------
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const strip = s => String(s).replace(/[ً-ْـٰ]/g, '').replace(/\s+/g, ' ').trim();
+const isLetter = c => /[ء-ي]/.test(c) || /[A-Za-z]/.test(c);
+const isAr = s => /[؀-ۿ]/.test(s);
+function norm(c){
+  if ('أإآٱ'.includes(c)) return 'ا';
+  if (c === 'ى' || c === 'ئ') return 'ي';
+  if (c === 'ؤ') return 'و';
+  return c.toUpperCase();
+}
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function toast(msg){ document.querySelectorAll('.toast').forEach(t => t.remove()); const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg; document.body.appendChild(el); setTimeout(() => el.remove(), 1700); }
+function store(k, v){ try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch(e){ return null; } }
+const getBest = () => { const v = store('gtn_best'); return v === null || v === undefined ? null : +v; };
+const pColor = i => COLORS[i % COLORS.length];
+
+// ---------- sound (WebAudio, no files) ----------
+let AC = null, MUTED = store('gtn_mute') === '1';
+document.getElementById('mute').textContent = MUTED ? '🔇' : '🔊';
+function toggleMute(){ MUTED = !MUTED; store('gtn_mute', MUTED ? '1' : '0'); document.getElementById('mute').textContent = MUTED ? '🔇' : '🔊'; if (!MUTED) sfx('tap'); }
+function ac(){ if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ return null; } } if (AC.state === 'suspended') AC.resume(); return AC; }
+document.addEventListener('pointerdown', ac, {once: true});
+function tone(f, d, type = 'sine', vol = .18, delay = 0, f2 = null){
+  const c = ac(); if (!c || MUTED) return;
+  const tt = c.currentTime + delay, o = c.createOscillator(), g = c.createGain();
+  o.type = type; o.frequency.setValueAtTime(f, tt); if (f2) o.frequency.exponentialRampToValueAtTime(f2, tt + d);
+  g.gain.setValueAtTime(0.0001, tt); g.gain.exponentialRampToValueAtTime(vol, tt + .01); g.gain.exponentialRampToValueAtTime(0.0001, tt + d);
+  o.connect(g); g.connect(c.destination); o.start(tt); o.stop(tt + d + .05);
+}
+function noise(d, vol = .2, delay = 0){
+  const c = ac(); if (!c || MUTED) return;
+  const tt = c.currentTime + delay, buf = c.createBuffer(1, c.sampleRate * d, c.sampleRate), data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+  const s = c.createBufferSource(), g = c.createGain(); s.buffer = buf; g.gain.value = vol; s.connect(g); g.connect(c.destination); s.start(tt);
+}
+function sfx(n){
+  if (MUTED) return;
+  switch (n) {
+    case 'tap': tone(520, .05, 'triangle', .08); break;
+    case 'ok': tone(660, .1, 'triangle', .2); tone(990, .16, 'triangle', .2, .08); break;
+    case 'bad': tone(180, .28, 'sawtooth', .12, 0, 90); break;
+    case 'tick': tone(1200, .04, 'square', .05); break;
+    case 'timeout': tone(300, .15, 'square', .1); tone(220, .3, 'square', .1, .17); break;
+    case 'turn': tone(440, .07, 'sine', .1); tone(660, .09, 'sine', .1, .07); break;
+    case 'win': [523, 659, 784, 1047].forEach((f, i) => tone(f, .22, 'triangle', .2, i * .11)); tone(1319, .5, 'triangle', .18, .46); break;
+    case 'lose': [392, 349, 311, 262].forEach((f, i) => tone(f, .3, 'sawtooth', .08, i * .18)); break;
+    case 'risk': for (let i = 0; i < 8; i++) noise(.05, .12, i * .07); tone(110, .6, 'sawtooth', .08, 0, 220); break;
+    case 'riskOk': noise(.3, .25); [784, 988, 1175, 1568].forEach((f, i) => tone(f, .25, 'square', .1, .1 + i * .09)); break;
+    case 'riskBad': noise(.6, .35); tone(140, .7, 'sawtooth', .15, .05, 50); break;
+    case 'fanfare': [392, 523, 659, 784, 659, 784, 1047].forEach((f, i) => tone(f, i === 6 ? .8 : .18, 'triangle', .2, i * .14)); break;
+  }
+}
+
+// ---------- confetti ----------
+const fx = document.getElementById('fx'), cx = fx.getContext('2d'); let parts = [], fxOn = false;
+function confetti(n = 140){
+  fx.width = innerWidth; fx.height = innerHeight;
+  for (let i = 0; i < n; i++) parts.push({x: innerWidth / 2 + (Math.random() - .5) * 120, y: innerHeight * .35, vx: (Math.random() - .5) * 14, vy: -Math.random() * 13 - 4, s: 5 + Math.random() * 6, c: COLORS[i % 4], r: Math.random() * 6, life: 110 + Math.random() * 40});
+  if (!fxOn) { fxOn = true; requestAnimationFrame(fxLoop); }
+}
+function fxLoop(){
+  cx.clearRect(0, 0, fx.width, fx.height);
+  parts = parts.filter(p => p.life-- > 0);
+  for (const p of parts) { p.vy += .35; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += .2; cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c; cx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); cx.restore(); }
+  if (parts.length) requestAnimationFrame(fxLoop); else { fxOn = false; cx.clearRect(0, 0, fx.width, fx.height); }
+}
+function banner(text, color){ const b = document.createElement('div'); b.className = 'banner'; b.style.setProperty('--pc', color || 'var(--gold)'); b.innerHTML = `<div>${esc(text)}</div>`; document.body.appendChild(b); setTimeout(() => b.remove(), 1000); }
+
+// ---------- board logic ----------
+// "و" العطف بتتكتب كلمة لوحدها بين سلاشين: "الإرهاب والكباب" ← الإرهاب / و / الكباب
+// قاعدة تلقائية: أي كلمة بتبدأ بـ "وال" (و + ال) بنفصل منها الواو، إلا الكلمات اللي الواو فيها من أصل الكلمة (والد، والي…).
+// لو الواو جاية مع كلمة من غير "ال" (زي "وليلة") بنكتبها مفصولة في المحتوى نفسه: "ألف ليلة و ليلة".
+const WAW_KEEP = /^(والد|والده|والدة|والدي|والدين|والدتي|والدها|والدك|والي|واليا)$/;
+const splitWaw = s => s.split(' ').flatMap(w => /^وال./.test(w) && w.length >= 5 && !WAW_KEEP.test(w) ? ['و', w.slice(1)] : [w]).join(' ');
+function newBoard(title, owner){
+  title = splitWaw(strip(title));
+  const keys = new Set();
+  for (const c of title) if (isLetter(c)) keys.add(norm(c));
+  return {title, owner, keys, used: new Set(), fresh: null, wrong: [], solvePen: 0, hints: 0, hint: HINTS[flatKey(title)] || null, status: 'play', ar: isAr(title)};
+}
+const penalty = b => (b.status === 'lost' ? -MAXW : -b.wrong.length) - b.solvePen;
+function guess(b, k){
+  if (b.status !== 'play' || b.used.has(k)) return null;
+  b.used.add(k); b.fresh = k;
+  if (b.keys.has(k)) { if ([...b.keys].every(x => b.used.has(x))) b.status = 'won'; return true; }
+  b.wrong.push(k);
+  if (b.wrong.length >= MAXW) b.status = 'lost';
+  return false;
+}
+const flat = s => [...strip(s)].filter(isLetter).map(norm).map(c => c === 'ة' ? 'ه' : c).join('');
+function trySolve(b, txt){
+  b.fresh = null;
+  if (flat(txt).length && flat(txt) === flat(b.title)) { b.status = 'won'; b.keys.forEach(k => b.used.add(k)); return true; }
+  b.solvePen += 10;
+  return false;
+}
+function boardHTML(b){
+  const fin = b.status !== 'play';
+  let h = `<div class="title" dir="${b.ar ? 'rtl' : 'ltr'}">`;
+  b.title.split(' ').forEach((w, i) => {
+    h += '<div class="word">' + (i ? '<span class="sep">/</span>' : '');
+    for (const c of w) {
+      if (!isLetter(c)) h += `<div class="slot fix">${esc(c)}</div>`;
+      else if (b.used.has(norm(c))) h += `<div class="slot show ${b.fresh === norm(c) ? 'new' : ''}">${esc(c)}</div>`;
+      else if (fin) h += `<div class="slot rev">${esc(c)}</div>`;
+      else h += '<div class="slot"></div>';
+    }
+    h += '</div>';
+  });
+  h += '</div><div class="wrongbox">';
+  for (let i = 0; i < MAXW; i++) { const x = b.wrong[i]; h += `<div class="w ${x ? 'f' : ''} ${x && i === b.wrong.length - 1 && b.fresh === x ? 'new' : ''}">${x ? esc(x) : ''}</div>`; }
+  h += '</div>';
+  if (b.solvePen) h += `<div class="pen">💥 ${t('wrongNames')} -${b.solvePen}</div>`;
+  if (b.hints) { const lb = b.hint.labels[LANG] || b.hint.labels.ar; h += `<div class="hints">${b.hint.h.slice(0, b.hints).map((x, i) => `<span class="hchip"><small>${lb[i]}</small> ${esc(pickLang(x))}</span>`).join('')}</div>`; }
+  return h;
+}
+function kbHTML(b){
+  const keys = b.ar ? AR_KEYS : EN_KEYS;
+  return `<div class="kb ${b.ar ? '' : 'en'}" dir="${b.ar ? 'rtl' : 'ltr'}">` + keys.map(k => {
+    const u = b.used.has(k);
+    const cls = u ? (b.keys.has(k) ? 'ok' : 'no') : '';
+    return `<button class="k ${cls}" ${u || b.status !== 'play' ? 'disabled' : ''} onclick="tap('${k}')">${k}</button>`;
+  }).join('') + '</div>';
+}
+function statusBadge(b){
+  if (b.status === 'won') return `<span class="badge ok">${t('solvedB')} ${penalty(b)}</span>`;
+  if (b.status === 'lost') return `<span class="badge bad">${t('lostB')} ${penalty(b)}</span>`;
+  if (b.status === 'stolen') return `<span class="badge bad">${t('stolenB')} ${penalty(b)}</span>`;
+  return `<span class="badge">${penalty(b)}</span>`;
+}
+
+// ---------- modal ----------
+function modal(html){ closeModal(); const m = document.createElement('div'); m.className = 'modal'; m.id = 'modal'; m.innerHTML = `<div class="card">${html}</div>`; document.body.appendChild(m); const i = m.querySelector('input'); if (i) setTimeout(() => i.focus(), 50); }
+function closeModal(){ const m = document.getElementById('modal'); if (m) m.remove(); }
+function stopTimer(){ clearInterval(S.tmr); S.tmr = null; }
+
+// ---------- home ----------
+function home(){
+  stopTimer(); closeModal(); clearNT(); clearInterval(S.bt);
+  S = {};
+  const best = getBest();
+  app.innerHTML = `
+    <div class="langbar"><button class="chip" onclick="toggleLang()">${t('langBtn')}</button></div>
+    <div class="logo"><div class="orbit"><div class="core"><img src="riska-logo.svg" alt="" onerror="this.replaceWith('🎯')"></div><div class="ring">${['🎬', '📺', '🎵', '⭐', '🎤', '🍿'].map((e, i) => `<span style="--a:${i * 60}deg"><i>${e}</i></span>`).join('')}</div></div></div>
+    <h1>${t('title')}</h1>
+    <p class="brandsub">${t('subtitle')}</p>
+    <p class="sub">${t('tagline')}</p>
+    <button class="btn pri" onclick="sfx('tap');multiSetup()">${t('multi')}</button>
+    <button class="btn" onclick="sfx('tap');soloSetup()">${t('solo')}</button>
+    <button class="btn" onclick="sfx('tap');profilesScreen()">${t('profilesBtn')}</button>
+    <button class="btn ghost" onclick="sfx('tap');rules()">${t('how')}</button>
+    ${best !== null ? `<p class="mut center">${t('best')} <b class="score">${best}</b></p>` : ''}
+    <p class="mut center" style="margin-top:22px">${t('beta')}</p>`;
+}
+function rules(){
+  app.innerHTML = `
+    <button class="link" onclick="home()">${t('back')}</button>
+    <div class="card"><h2>${t('rulesTitle')}</h2><ul class="rules">${t('rules').map(x => `<li>${x}</li>`).join('')}</ul></div>
+    <div class="card"><h2>${t('multiRulesTitle')}</h2><ul class="rules">${t('multiRules').map(x => `<li>${x}</li>`).join('')}</ul></div>`;
+}
+function profilesScreen(){
+  const a = loadProfiles().sort((x, y) => y.wins - x.wins || (y.titles ? y.sumPen / y.titles : -99) - (x.titles ? x.sumPen / x.titles : -99));
+  S.plist = a.map(p => p.name);
+  const cards = a.map((p, i) => `<div class="card"><div class="bhead"><span>${esc(p.name)}</span><span class="lvtag">${rankLabel(p)}</span></div>
+    <div class="mut">${t('stGames')}: <b>${p.games}</b> · ${t('stWins')}: <b>${p.wins}</b> · ${t('stTitles')}: <b>${p.titles}</b><br>
+    ${t('stAvg')}: <b class="score">${p.titles ? (p.sumPen / p.titles).toFixed(1) : '—'}</b> · ${t('stPerfect')}: <b>${p.perfect}</b> · ${t('stRisk')}: <b>${p.riskOk}/${p.riskOk + p.riskBad}</b></div>
+    <button class="link" style="margin-top:4px" onclick="delProfile(${i})">🗑 ${t('del')}</button></div>`).join('');
+  app.innerHTML = `<button class="link" onclick="home()">${t('back')}</button>
+    <div class="card"><h2>${t('profilesTitle')}</h2><p class="mut">${t('profilesNote')}</p></div>
+    ${cards || `<p class="mut center">${t('noProfiles')}</p>`}`;
+}
+function delProfile(i){ const n = S.plist[i]; if (!confirm(t('delQ', n))) return; saveProfiles(loadProfiles().filter(x => pkey(x.name) !== pkey(n))); profilesScreen(); }
+// أقسام لغة الواجهة الأول
+const CAT_ORDER = {ar: ['ar', 'series', 'songs', 'people', 'en', 'enseries', 'ensongs', 'enpeople'], en: ['en', 'enseries', 'ensongs', 'enpeople', 'ar', 'series', 'songs', 'people']};
+function catChips(cur, onclick){ return CAT_ORDER[LANG].filter(k => CATS[k]).map(k => `<button class="chip ${cur === k ? 'on' : ''}" onclick="${onclick}('${k}')">${catName(k)}</button>`).join(''); }
+
+// ---------- solo ----------
+const SOLO_LEVELS = [1, 1, 2, 2, 3];
+function soloSetup(){
+  S = {mode: 'solo', cat: S.cat || defaultCat()};
+  app.innerHTML = `
+    <button class="link" onclick="home()">${t('back')}</button>
+    <div class="card"><h2>${t('solo')}</h2>
+      <label>${t('pickCat')}</label><div class="chips">${catChips(S.cat, 'soloCat')}</div>
+      <p class="mut" style="margin-top:12px">${t('soloInfo')}</p>
+      <button class="btn pri" onclick="soloStart()">${t('start')}</button>
+    </div>`;
+}
+function soloCat(k){ sfx('tap'); S.cat = k; soloSetup(); }
+function soloStart(){
+  sfx('turn');
+  const used = new Set(); S.films = SOLO_LEVELS.map(lv => { const x = pickTitle(S.cat, lv, used); used.add(x); return x; });
+  S.i = 0; S.total = 0;
+  S.b = newBoard(S.films[0], 0); renderSolo();
+}
+function renderSolo(){
+  const b = S.b, fin = b.status !== 'play';
+  let after = '';
+  if (fin) {
+    const last = S.i === S.films.length - 1;
+    const msg = b.status === 'won' ? (penalty(b) === 0 ? t('perfect') : t('bravo')) : t('boxFull');
+    after = `<div class="card center"><div style="font-size:24px;font-weight:900">${msg}</div>
+      <p class="mut">${t('thisScore')} <b class="score">${penalty(b)}</b></p>
+      <button class="btn pri" onclick="sfx('tap');${last ? 'soloEnd()' : 'soloNext()'}">${last ? t('finalBtn') : t('nextLevel')}</button></div>`;
+  }
+  app.innerHTML = `
+    <div class="top"><button class="link" onclick="home()">${t('exit')}</button><span>${t('level', S.i + 1, S.films.length)} · ${t('lv')[SOLO_LEVELS[S.i]]}</span><span>${t('score')} <b>${S.total}</b></span></div>
+    <div class="board ${b.status === 'won' ? 'won' : ''}" id="bd">${boardHTML(b)}</div>
+    ${fin ? after : kbHTML(b) + `<div class="actions"><button class="btn pri" onclick="solveModal()">${t('iKnow')}</button>${canHint(b) ? `<button class="btn hint" onclick="hintAd()">${t('hint')} <small>(${3 - b.hints})</small></button>` : ''}</div>`}`;
+}
+function soloNext(){ S.i++; S.b = newBoard(S.films[S.i], 0); renderSolo(); }
+function soloEnd(){
+  const best = getBest(); const isBest = best === null || S.total > best; if (isBest) store('gtn_best', S.total);
+  sfx('fanfare'); confetti();
+  app.innerHTML = `<div class="card center" style="margin-top:40px"><div class="big">${S.total === 0 ? '👑' : '🎬'}</div>
+    <h2>${t('finalScore')}</h2><div class="score" style="font-size:50px">${S.total}</div>
+    ${isBest ? `<p class="mut">${t('newRecord')}</p>` : `<p class="mut">${t('yourBest')} ${best}</p>`}
+    <button class="btn pri" onclick="soloStart()">${t('again')}</button><button class="btn" onclick="home()">${t('homeBtn')}</button></div>`;
+}
+
+// ---------- shared actions ----------
+function curBoard(){ return S.mode === 'solo' ? S.b : S.boards[S.turn]; }
+// في الجماعي: بعد أي حركة الدور بيتقفل لحد ما الدور اللي بعده يبدأ (عشان الضغطة المزدوجة متحسبش حركتين)
+const locked = () => S.mode === 'multi' && S.busy;
+function tap(k){
+  if (locked()) return;
+  const b = curBoard(); const r = guess(b, k);
+  if (r === null) return;
+  if (b.status === 'won') { sfx('win'); confetti(90); }
+  else if (b.status === 'lost') sfx('lose');
+  else sfx(r ? 'ok' : 'bad');
+  afterAction(b, r ? t('right') : t('notIn'), r, true);
+}
+function solveModal(){
+  if (locked()) return;
+  const b = curBoard(); sfx('tap');
+  modal(`${modalTimer()}<h2>${t('sayAll')}</h2><p class="mut">${t('sayAllWarn')}</p>
+    <input id="mi" dir="${b.ar ? 'rtl' : 'ltr'}" placeholder="${t('typeName')}" onkeydown="if(event.key==='Enter')doSolve()">
+    <div class="actions"><button class="btn pri" onclick="doSolve()">${t('confirm')}</button><button class="btn" onclick="closeModal()">${t('cancel')}</button></div>`);
+  typingTime();
+}
+function doSolve(){
+  const el = document.getElementById('mi'); if (!el || locked()) return;
+  const v = el.value; if (!flat(v)) return;
+  closeModal(); const b = curBoard(); const r = trySolve(b, v);
+  if (r) { sfx('win'); confetti(); } else sfx('riskBad');
+  afterAction(b, r ? t('solveOk') : t('solveBad'), r);
+}
+function afterAction(b, msg, good, letter){
+  if (S.mode === 'solo') {
+    if (b.status !== 'play' && !b.counted) { b.counted = true; S.total += penalty(b); }
+    renderSolo(); if (!good) shake(); else if (b.status === 'play') toast(msg);
+  } else {
+    nextTurn(msg, SHOW_MS, letter ? S.turn : null);
+    if (!good) shake();
+  }
+}
+function shake(){ const el = document.getElementById('bd'); if (el) { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake', 'flashbad'); } }
+
+// ---------- multiplayer ----------
+function multiSetup(){
+  S = {mode: 'multi', n: 3, cat: defaultCat(), timer: 20, matches: 1, auto: false, level: 'mix', names: ['', '', '', '']};
+  renderMultiSetup();
+}
+function renderMultiSetup(){
+  const nChips = [2, 3, 4].map(n => `<button class="chip ${S.n === n ? 'on' : ''}" onclick="setupSet('n',${n})">${t('players', n)}</button>`).join('');
+  const tChips = [[0, t('noTimer')], [10, '10 ' + t('sec')], [15, '15 ' + t('sec')], [20, '20 ' + t('sec')], [30, '30 ' + t('sec')]].map(([v, l]) => `<button class="chip ${S.timer === v ? 'on' : ''}" onclick="setupSet('timer',${v})">⏱ ${l}</button>`).join('');
+  const mChips = [1, 3, 5, 10].map(m => `<button class="chip ${S.matches === m ? 'on' : ''}" onclick="setupSet('matches',${m})">${m}</button>`).join('');
+  const lChips = [1, 2, 3, 'mix'].map(l => `<button class="chip ${S.level === l ? 'on' : ''}" onclick="setupSet('level',${typeof l === 'number' ? l : "'mix'"})">${t('lv')[l]}</button>`).join('');
+  const profs = loadProfiles().sort((x, y) => y.last - x.last).slice(0, 12); S.plist = profs.map(p => p.name);
+  const picked = n => S.names.slice(0, S.n).some(x => pkey(x) === pkey(n));
+  const profChips = profs.length ? `<p class="mut" style="font-size:12px">${t('savedPlayers')}</p><div class="chips" style="margin-bottom:10px">${profs.map((p, i) => `<button class="chip ${picked(p.name) ? 'on' : ''}" onclick="useProfile(${i})">${esc(p.name)} <small>${rankLabel(p)}</small></button>`).join('')}</div>` : '';
+  let names = profChips; for (let i = 0; i < S.n; i++) names += `<div class="row" style="margin-bottom:8px"><span class="dot" style="--pc:${pColor(i)}"></span><input id="n${i}" placeholder="${t('playerPh', i + 1)}" value="${esc(S.names[i])}"></div>`;
+  app.innerHTML = `
+    <button class="link" onclick="home()">${t('back')}</button>
+    <div class="card"><h2>${t('multi')}</h2>
+      <label>${t('numPlayers')}</label><div class="chips">${nChips}</div>
+      <label>${t('names')}</label>${names}
+      <label>${t('whoSets')}</label><div class="chips">
+        <button class="chip ${!S.auto ? 'on' : ''}" onclick="setupSet('auto',false)">${t('setTurns')}</button>
+        <button class="chip ${S.auto ? 'on' : ''}" onclick="setupSet('auto',true)">${t('setAuto')}</button></div>
+      <label>${S.auto ? t('roundsAuto') : t('matches')}</label><div class="chips">${mChips}</div>
+      <label>${t('diff')}</label><div class="chips">${lChips}</div>
+      <p class="mut" style="font-size:12px;margin-top:4px">${t('diffNote')}</p>
+      <label>${t('turnTime')}</label><div class="chips">${tChips}</div>
+      <label>${S.auto ? t('catAuto') : t('catManual')}</label><div class="chips">${catChips(S.cat, 'setupCat')}</div>
+      <p class="mut" style="margin-top:12px">${S.auto ? t('sumAuto', S.matches) : t('sumManual', S.n, S.n * S.matches)}</p>
+      <button class="btn pri" onclick="multiStart()">${t('go')}</button>
+    </div>`;
+}
+function setupSet(k, v){ sfx('tap'); saveNames(); S[k] = v; renderMultiSetup(); }
+function setupCat(k){ setupSet('cat', k); }
+// اختيار لاعب محفوظ: يتحط في أول خانة فاضية، ولو موجود يتشال
+function useProfile(i){
+  sfx('tap'); saveNames(); const n = S.plist[i];
+  const at = S.names.slice(0, S.n).findIndex(x => pkey(x) === pkey(n));
+  if (at >= 0) S.names[at] = '';
+  else { const free = S.names.slice(0, S.n).findIndex(x => !x); if (free < 0) { toast(t('full')); return; } S.names[free] = n; }
+  renderMultiSetup();
+}
+function saveNames(){ for (let i = 0; i < S.n; i++) { const el = document.getElementById('n' + i); if (el) S.names[i] = el.value.trim(); } }
+function multiStart(){
+  saveNames(); sfx('turn');
+  S.players = []; for (let i = 0; i < S.n; i++) { const nm = S.names[i]; if (nm) ensureProfile(nm); S.players.push({name: nm || t('defName', i + 1), prof: nm || null, score: 0, color: pColor(i)}); }
+  S.rounds = S.auto ? S.matches : S.n * S.matches; S.round = 0; S.usedTitles = new Set(); S.tb = false; S.acceptTie = false; S.rlv = null; S.statsDone = false;
+  roundSetup();
+}
+function rLabel(){ if (S.auto) return t('round', S.round + 1, S.rounds); const n = S.players.length, m = Math.floor(S.round / n) + 1, r = S.round % n + 1; return (S.rounds > n ? t('match', m, S.rounds / n) : '') + t('round', r, n); }
+// مستوى الراوند: كل اللاعيبة بياخدوا أسماء من نفس المستوى. "متنوع" = مستوى عشوائي كل راوند (مش نفس اللي قبله)
+function roundLevel(){
+  if (S.level !== 'mix') return S.level;
+  const opts = [1, 2, 3].filter(l => l !== S.rlv); return opts[Math.floor(Math.random() * opts.length)];
+}
+function pickRandom(){ const x = pickTitle(S.cat, S.rlv || 2, S.usedTitles); S.usedTitles.add(x); return x; }
+function roundSetup(){
+  S.rlv = roundLevel();
+  if (S.auto) {
+    S.setter = -1; S.guessers = S.players.map((_, i) => i);
+    const titles = {}; S.guessers.forEach(i => { titles[i] = pickRandom(); });
+    return startRound(titles);
+  }
+  S.setter = S.round % S.players.length;
+  S.guessers = S.players.map((_, i) => i).filter(i => i !== S.setter);
+  const st = S.players[S.setter];
+  const inputs = S.guessers.map(i => `<label>${t('titleFor')} <b style="color:${S.players[i].color}">${esc(S.players[i].name)}</b></label>
+    <div class="row"><input id="f${i}" placeholder="${t('typeTitle')}"><button class="btn sm" onclick="randFill(${i})">🎲</button></div>`).join('');
+  app.innerHTML = `
+    <div class="top"><button class="link" onclick="home()">${t('exit')}</button><span>${rLabel()}</span><span></span></div>
+    <div class="card" style="border-color:${st.color}"><h2>${t('setterTurn', `<span style="color:${st.color}">${esc(st.name)}</span>`)}</h2>
+      <p class="mut">${t('setterNote')}</p>
+      <p class="mut">${t('suggestLv', t('lv')[S.rlv])}</p>
+      <button class="btn sm" onclick="randAll()">${t('pickAll')}</button>
+      ${inputs}
+      <button class="btn pri" style="margin-top:16px" onclick="roundReady()">${t('done')}</button>
+    </div>`;
+}
+function randFill(i){ sfx('tap'); document.getElementById('f' + i).value = pickRandom(); }
+function randAll(){ sfx('tap'); S.guessers.forEach(i => { document.getElementById('f' + i).value = pickRandom(); }); }
+function roundReady(){
+  const titles = {};
+  for (const i of S.guessers) {
+    const v = strip(document.getElementById('f' + i).value);
+    if (!flat(v)) { sfx('bad'); toast(t('needTitle', S.players[i].name)); return; }
+    titles[i] = v;
+  }
+  startRound(titles);
+}
+function startRound(titles){
+  S.boards = S.guessers.map(i => { S.usedTitles.add(titles[i]); return newBoard(titles[i], i); });
+  S.turn = S.tb ? 0 : S.round % S.boards.length; S.delta = S.players.map(() => 0);
+  sfx('turn');
+  const fp = S.players[S.boards[S.turn].owner];
+  const lvLine = S.tb || S.auto ? `<p class="mut">${t('roundLv')} <b>${t('lv')[S.rlv]}</b></p>` : '';
+  app.innerHTML = `<div class="card center" style="margin-top:50px"><div class="big">${S.tb ? '⚔️' : S.auto ? '🎲' : '🤫'}</div><h2>${S.tb ? t('tbTitle') : S.auto ? rLabel() : t('titlesSet')}</h2>
+    ${lvLine}
+    <p class="mut">${S.tb ? t('tbNote', catName(S.cat)) : S.auto ? t('autoNote', catName(S.cat)) : t('handPhone')} ${t('firstTurn')} <b style="color:${fp.color}">${esc(fp.name)}</b></p>
+    <button class="btn pri" onclick="beginTurn()">${t('letsPlay')}</button></div>`;
+}
+function eligible(idx){
+  const b = S.boards[idx];
+  return b.status === 'play' || S.boards.some(o => o !== b && o.status === 'play');
+}
+// وقت إضافي للكتابة: لما تفتح "أعرف اسمي" أو "ريسك" بتاخد ثواني زيادة (مرة واحدة بس في الدور)
+const TYPE_BONUS = 15;
+function typingTime(){
+  if (S.mode !== 'multi' || !S.tmr || S.bonus) return;
+  S.bonus = true; S.left += TYPE_BONUS; S.tmax = Math.max(S.tmax, S.left); updateTimer();
+}
+const modalTimer = () => S.mode === 'multi' && S.timer ? `<div class="mtime">⏱ <b id="mtn"></b> ${t('sec')}</div>` : '';
+function beginTurn(){
+  S.busy = false; S.bonus = false; S.tmax = S.timer;
+  const p = S.players[S.boards[S.turn].owner];
+  renderMulti(); sfx('turn'); banner(t('turnOf', p.name), p.color);
+  const bd = document.getElementById('bd'); if (bd) bd.scrollIntoView({block: 'start'});
+  stopTimer();
+  if (S.timer) { S.left = S.timer; startTimer(); }
+}
+function startTimer(){
+  stopTimer();
+  if (S.timer) {
+    updateTimer();
+    S.tmr = setInterval(() => {
+      S.left--; updateTimer();
+      if (S.left > 0 && S.left <= 5) sfx('tick');
+      if (S.left <= 0) { stopTimer(); closeModal(); sfx('timeout'); const b = S.boards[S.turn]; if (b.status === 'play') { b.wrong.push('⏰'); b.fresh = '⏰'; if (b.wrong.length >= MAXW) { b.status = 'lost'; sfx('lose'); } nextTurn(t('timeUp1')); } else nextTurn(t('timeUp')); }
+    }, 1000);
+  }
+}
+function updateTimer(){
+  const warn = S.left <= 5, mt = document.getElementById('mtn');
+  if (mt) { mt.textContent = S.left; mt.parentElement.classList.toggle('warn', warn); }
+  const bar = document.getElementById('tbar'), num = document.getElementById('tnum'); if (!bar) return;
+  bar.classList.toggle('warn', warn); bar.firstElementChild.style.width = Math.max(0, S.left / (S.tmax || S.timer) * 100) + '%';
+  num.textContent = S.left; num.classList.toggle('warn', warn);
+}
+function renderMulti(){
+  const cur = S.boards[S.turn], cp = S.players[cur.owner];
+  document.documentElement.style.setProperty('--pc', cp.color);
+  const boards = S.boards.map((b, idx) => `
+    <div class="board mini ${idx === S.turn ? 'turn' : ''} ${b.status !== 'play' ? 'done' : ''} ${b.status === 'won' ? 'won' : ''}" style="--pc:${S.players[b.owner].color}" ${idx === S.turn ? 'id="bd"' : ''}>
+      <div class="bhead"><span><span class="dot"></span>${esc(S.players[b.owner].name)}${idx === S.turn ? ' 👈' : ''}</span>${statusBadge(b)}</div>
+      ${boardHTML(b)}
+    </div>`).join('');
+  const others = S.boards.some(b => b !== cur && b.status === 'play');
+  const playing = cur.status === 'play';
+  const head = (S.tb ? t('tbHead') : rLabel()) + ` <span class="lvtag">${t('lv')[S.rlv] || ''}</span>`;
+  const buzzing = S.buzz !== null && S.buzz !== undefined;
+  app.innerHTML = `
+    <div class="top"><button class="link" onclick="home()">${t('exit')}</button><span>${head}</span><span>${S.setter >= 0 ? '🔒 ' + esc(S.players[S.setter].name) : ''}</span></div>
+    ${boards}
+    <div class="card dock ${S.busy ? 'wait' : ''}" style="--pc:${cp.color}">
+      <div class="bhead"><span>${t('turnLbl')} <span class="turnName">${esc(cp.name)}</span></span>${S.timer ? `<span class="tnum" id="tnum">${S.left ?? S.timer}</span>` : `<span class="mut">${t('oneMove')}</span>`}</div>
+      ${buzzHTML()}
+      ${S.timer ? `<div class="tbar" id="tbar"><i style="width:${(S.left ?? S.timer) / (S.tmax || S.timer) * 100}%"></i></div>` : ''}
+      ${buzzing ? '' : playing ? kbHTML(cur) + `<div class="actions"><button class="btn pri" onclick="solveModal()">${t('iKnowMine')}</button>${canHint(cur) ? `<button class="btn hint" onclick="hintAd()">${t('hint')} <small>(${3 - cur.hints})</small></button>` : ''}${others ? `<button class="btn bad" onclick="riskModal()">${t('risk')}</button>` : ''}</div>`
+        : `<p class="mut center" style="margin-top:8px">${t('finishedNote')}</p>
+           <div class="actions"><button class="btn bad" onclick="riskModal()">${t('risk2')}</button><button class="btn" onclick="if(!locked()){sfx('tap');nextTurn(t('passed'),500)}">${t('pass')}</button></div>`}
+    </div>
+    ${scoreTable(false)}`;
+}
+const AD_SECONDS = 5;
+// ================= المنصة: فيسبوك أو متصفح عادي =================
+// جوه فيسبوك (FBInstant موجود): بنشغّل الـ SDK والإعلانات الحقيقية.
+// في المتصفح العادي: كل حاجة بتشتغل بنسخة تجريبية (إعلان وهمي 5 ثواني).
+const AD_PLACEMENT_ID = ''; // ← رقم مكان الإعلان (Rewarded Video) من Monetization Manager
+const PF = {
+  fb: false, preloaded: null,
+  async init(){
+    if (!window.FBInstant) return;
+    try {
+      await FBInstant.initializeAsync(); this.fb = true;
+      let saved = null; try { saved = localStorage.getItem('gtn_lang'); } catch(e){}
+      if (!saved) { LANG = String(FBInstant.getLocale() || '').startsWith('ar') ? 'ar' : 'en'; applyLang(); }
+      FBInstant.setLoadingProgress(100);
+      await FBInstant.startGameAsync();
+      this.preload();
+    } catch(e){ console.warn('FBInstant init failed', e); this.fb = false; }
+  },
+  playerId(){ try { return this.fb ? FBInstant.player.getID() : 'local'; } catch(e){ return 'local'; } },
+  // تحميل الإعلان بدري عشان يبقى جاهز أول ما اللاعب يطلب تلميح
+  preload(){
+    if (!this.fb || !AD_PLACEMENT_ID) return;
+    this.preloaded = FBInstant.getRewardedVideoAsync(AD_PLACEMENT_ID).then(ad => ad.loadAsync().then(() => ad)).catch(() => null);
+  },
+  // إعلان بمكافأة: done(true) بس لو الإعلان اتفرج عليه للآخر
+  rewardedAd(done){
+    if (this.fb && AD_PLACEMENT_ID) {
+      const p = this.preloaded || Promise.resolve(null); this.preloaded = null;
+      p.then(ad => ad ? ad.showAsync().then(() => done(true)) : done(false)).catch(() => done(false)).finally(() => this.preload());
+      return;
+    }
+    let left = AD_SECONDS;
+    modal(`<h2>${t('adTitle')}</h2><div class="adbox"><div>${t('ad')}</div><div class="cd" id="adcd">${left}</div><div class="mut">${t('adNote')}</div></div><p class="mut center">${t('adWait')}</p>`);
+    const iv = setInterval(() => {
+      left--; const el = document.getElementById('adcd'); if (el) el.textContent = left;
+      if (left <= 0) { clearInterval(iv); closeModal(); done(true); }
+    }, 1000);
+  }
+};
+function canHint(b){ return b.status === 'play' && !!b.hint && b.hints < 3; }
+function hintAd(){
+  if (locked()) return;
+  const b = curBoard(); if (!canHint(b)) return;
+  if (S.mode !== 'solo') { stopTimer(); S.busy = true; }
+  sfx('tap');
+  PF.rewardedAd(ok => {
+    if (!ok) { // الإعلان مجاش أو اتقفل قبل ما يخلص: مفيش تلميح، واللاعب يكمّل دوره
+      toast(t('adFail'));
+      if (S.mode === 'solo') renderSolo(); else { S.busy = false; renderMulti(); startTimer(); }
+      return;
+    }
+    {
+      const i = b.hints; b.hints++; b.fresh = null; S.hintCount = (S.hintCount || 0) + 1;
+      const msg = '💡 ' + (b.hint.labels[LANG] || b.hint.labels.ar)[i] + ': ' + pickLang(b.hint.h[i]);
+      sfx('ok');
+      if (S.mode === 'solo') { renderSolo(); toast(msg); }
+      else {
+        // التلميح مش بياخد الدور: اللاعب يكمّل ويحط حرف، والتايمر يكمّل (على الأقل 10 ثواني عشان يلحق يقرا التلميح)
+        S.busy = false; S.left = Math.max(S.left || 0, 10); S.tmax = Math.max(S.tmax, S.left);
+        renderMulti(); startTimer(); toast(msg);
+      }
+    }
+  });
+}
+function riskModal(){
+  if (locked()) return;
+  sfx('risk');
+  const cur = S.boards[S.turn];
+  const targets = S.boards.map((b, idx) => ({b, idx})).filter(x => x.b !== cur && x.b.status === 'play');
+  S.rt = targets[0].idx;
+  const chips = targets.map(x => `<button class="chip ${x.idx === S.rt ? 'on' : ''}" onclick="S.rt=${x.idx};sfx('tap');document.querySelectorAll('#rtc .chip').forEach(c=>c.classList.remove('on'));this.classList.add('on')">${esc(S.players[x.b.owner].name)}</button>`).join('');
+  modal(`${modalTimer()}<h2>${t('riskTitle')}</h2><p class="mut">${t('riskNote')}</p>
+    <label>${t('onWho')}</label><div class="chips" id="rtc">${chips}</div>
+    <label>${t('theTitle')}</label><input id="mi" placeholder="${t('typeName')}" onkeydown="if(event.key==='Enter')doRisk()">
+    <div class="actions"><button class="btn bad" onclick="doRisk()">${t('riskGo')}</button><button class="btn" onclick="closeModal()">${t('cancel')}</button></div>`);
+  typingTime();
+}
+function doRisk(){
+  const el = document.getElementById('mi'); if (!el || locked()) return;
+  const v = el.value; if (!flat(v)) return;
+  closeModal(); S.busy = true;
+  const me = S.boards[S.turn].owner, tb = S.boards[S.rt];
+  statRisk(me, flat(v) === flat(tb.title));
+  if (flat(v) === flat(tb.title)) { S.delta[me] += 5; tb.status = 'stolen'; tb.fresh = null; sfx('riskOk'); confetti(); nextTurn(t('riskOk')); }
+  else { S.delta[me] -= 10; sfx('riskBad'); nextTurn(t('riskBad')); shake(); }
+}
+// بعد أي حركة: الشاشة بتفضل على نفس اللاعب ثانيتين عشان الكل يشوف الحرف نزل فين، وبعدين الدور يعدّي
+const SHOW_MS = 2000;
+// الجرس 🔔: بعد أي حرف، أي لاعب عرف الاسم يدوس على اسمه. أسرع واحد ياخد الإجابة
+// (صاحب الاسم = يقول اسمه، غيره = ريسك). الجرس مش بياخد دور حد.
+const BUZZ_SEC = 3, BUZZ_ANSWER = 20;
+function clearNT(){ clearInterval(S.nt); clearTimeout(S.nt); S.nt = null; }
+function nextTurn(msg, delay = SHOW_MS, buzzIdx = null){
+  stopTimer(); clearNT(); S.busy = true; S.buzz = null;
+  renderMulti(); toast(msg);
+  const go = () => {
+    clearNT(); if (S.mode !== 'multi' || !S.boards) return;
+    S.buzz = null;
+    if (!S.boards.some(b => b.status === 'play')) return endRound();
+    const len = S.boards.length;
+    for (let j = 1; j <= len; j++) { const idx = (S.turn + j) % len; if (eligible(idx)) { S.turn = idx; break; } }
+    beginTurn();
+  };
+  // الأول: ثانيتين الكل يشوف الحرف نزل فين. بعدها (لو الاسم لسه مفتوح): شريط الجرس 3 ثواني مكان الكيبورد
+  const openBuzz = () => {
+    S.buzz = buzzIdx; S.bleft = BUZZ_SEC; renderMulti(); sfx('tick');
+    S.nt = setInterval(() => {
+      S.bleft--; const e = document.getElementById('bzl'); if (e) e.textContent = S.bleft;
+      if (S.bleft <= 0) go();
+    }, 1000);
+  };
+  const canBuzz = buzzIdx !== null && S.boards[buzzIdx].status === 'play';
+  S.nt = setTimeout(canBuzz ? openBuzz : go, delay);
+}
+function buzzHTML(){
+  if (S.buzz === null || S.buzz === undefined) return '';
+  const tp = S.players[S.boards[S.buzz].owner];
+  const btns = S.boards.map(b => b.owner).map(p => `<button class="chip bz" style="--pc:${S.players[p].color}" onclick="buzz(${p})">🔔 ${esc(S.players[p].name)}</button>`).join('');
+  return `<div class="buzzbar"><div>${t('buzzQ', `<b style="color:${tp.color}">${esc(tp.name)}</b>`)} <b class="tnum" id="bzl">${S.bleft}</b></div><div class="chips">${btns}</div></div>`;
+}
+function buzz(p){
+  if (S.buzz === null || S.buzz === undefined) return;
+  clearNT(); const idx = S.buzz; S.buzz = null; S.bz = {p, idx};
+  const b = S.boards[idx], own = b.owner === p, pl = S.players[p];
+  sfx('risk'); renderMulti();
+  let left = BUZZ_ANSWER;
+  modal(`<div class="mtime">⏱ <b id="bzt">${left}</b> ${t('sec')}</div><h2>🔔 <span style="color:${pl.color}">${esc(pl.name)}</span> ${own ? t('buzzOwn') : t('buzzRisk', esc(S.players[b.owner].name))}</h2>
+    <p class="mut">${own ? t('buzzOwnNote') : t('buzzRiskNote')}<br>${t('buzzMust')}</p>
+    <input id="mi" dir="${b.ar ? 'rtl' : 'ltr'}" placeholder="${t('typeName')}" onkeydown="if(event.key==='Enter')doBuzz()">
+    <div class="actions"><button class="btn pri" onclick="doBuzz()">${t('confirm')}</button></div>`);
+  S.bt = setInterval(() => {
+    left--; const e = document.getElementById('bzt'); if (e) { e.textContent = left; e.parentElement.classList.toggle('warn', left <= 5); }
+    if (left > 0 && left <= 5) sfx('tick');
+    if (left <= 0) doBuzz(true);
+  }, 1000);
+}
+function doBuzz(timeout){
+  const el = document.getElementById('mi'); if (!S.bz || !el) return;
+  const v = el.value; if (!timeout && !flat(v)) return;
+  clearInterval(S.bt); closeModal();
+  const {p, idx} = S.bz; S.bz = null;
+  const b = S.boards[idx], who = S.players[p].name;
+  let ok;
+  if (b.owner === p) { if (timeout) { b.solvePen += 10; ok = false; } else ok = trySolve(b, v); }
+  else { ok = !timeout && flat(v) === flat(b.title); statRisk(p, ok); if (ok) { S.delta[p] += 5; b.status = 'stolen'; b.fresh = null; } else S.delta[p] -= 10; }
+  if (ok) { sfx(b.owner === p ? 'win' : 'riskOk'); confetti(); } else sfx('riskBad');
+  nextTurn(ok ? t('buzzOk', who, b.owner === p) : t('buzzBad', who));
+  if (!ok) shake();
+}
+function scoreTable(withDelta){
+  const rows = S.players.map((p, i) => {
+    const inRound = S.guessers.includes(i);
+    const d = i === S.setter ? '🔒 0' : !inRound ? '—' : (withDelta ? (S.delta[i] > 0 ? '+' : '') + S.delta[i] : '');
+    return `<tr><td><span class="dot" style="--pc:${p.color}"></span>${esc(p.name)}</td>${withDelta ? `<td>${d}</td>` : ''}<td class="score">${p.score}</td></tr>`;
+  }).join('');
+  return `<div class="card"><table><tr><th>${t('player')}</th>${withDelta ? `<th>${t('thisRound')}</th>` : ''}<th>${t('total')}</th></tr>${rows}</table></div>`;
+}
+function endRound(){
+  stopTimer();
+  document.documentElement.style.setProperty('--pc', '#ffc23d');
+  S.boards.forEach(b => {
+    S.delta[b.owner] += penalty(b); b.fresh = null;
+    const pen = penalty(b), won = b.status === 'won';
+    updateProfile(S.players[b.owner].prof, p => { p.titles++; p.sumPen += pen; if (won) { p.solved++; if (pen === 0) p.perfect++; } });
+  });
+  S.players.forEach((p, i) => { if (S.guessers.includes(i)) p.score += S.delta[i]; });
+  const last = S.tb || S.round === S.rounds - 1;
+  sfx('win');
+  const reveal = S.boards.map(b => `<div class="board mini done ${b.status === 'won' ? 'won' : ''}" style="--pc:${S.players[b.owner].color}"><div class="bhead"><span><span class="dot"></span>${esc(S.players[b.owner].name)}</span>${statusBadge(b)}</div>${boardHTML(b)}</div>`).join('');
+  app.innerHTML = `<div class="top"><span></span><span>${S.tb ? t('endTb') : t('endOf', rLabel())}</span><span></span></div>
+    ${reveal}${scoreTable(true)}
+    <button class="btn pri" onclick="sfx('tap');${last ? 'finalResults()' : 'S.round++;roundSetup()'}">${last ? t('finalRes') : !S.auto && (S.round + 1) % S.players.length === 0 ? t('nextMatch') : t('nextRound')}</button>`;
+}
+function finalResults(){
+  const max = Math.max(...S.players.map(p => p.score));
+  const tied = S.players.map((p, i) => i).filter(i => S.players[i].score === max);
+  if (tied.length > 1 && !S.acceptTie) {
+    sfx('risk');
+    app.innerHTML = `<div class="card center" style="margin-top:40px"><div class="big">⚔️</div><h2>${t('tie')}</h2>
+      <p class="mut">${t('tiedOn', tied.map(i => `<b style="color:${S.players[i].color}">${esc(S.players[i].name)}</b>`).join(t('and')), max)}</p>
+      <button class="btn pri" onclick="startTiebreak()">${t('tbBtn')}</button>
+      <button class="btn" onclick="S.acceptTie=true;finalResults()">${t('acceptTie')}</button></div>
+      ${scoreTable(false)}`;
+    S.tied = tied; return;
+  }
+  const ranked = S.players.slice().sort((a, b) => b.score - a.score);
+  if (!S.statsDone) { S.statsDone = true; S.players.forEach((p, i) => updateProfile(p.prof, x => { x.games++; if (tied.length === 1 && tied[0] === i) x.wins++; })); }
+  const medals = ['🏆', '🥈', '🥉', '🎬'];
+  sfx('fanfare'); confetti(220); setTimeout(() => confetti(160), 700);
+  const rows = ranked.map((p, i) => `<tr><td>${medals[i] || ''} <span class="dot" style="--pc:${p.color}"></span>${esc(p.name)}</td><td class="score">${p.score}</td></tr>`).join('');
+  const winTitle = tied.length > 1 ? t('tiedWin', tied.map(i => esc(S.players[i].name)).join(t('and'))) : t('won', esc(ranked[0].name));
+  app.innerHTML = `<div class="card center" style="margin-top:30px;border-color:${ranked[0].color}"><div class="big">🏆</div><h2 style="font-size:28px;color:${ranked[0].color}">${winTitle}</h2></div>
+    <div class="card"><table>${rows}</table></div>
+    <button class="btn pri" onclick="S.players.forEach(p=>p.score=0);S.round=0;S.tb=false;S.acceptTie=false;S.statsDone=false;S.usedTitles=new Set();roundSetup()">${t('newGame')}</button>
+    <button class="btn" onclick="home()">${t('homeBtn')}</button>`;
+}
+function startTiebreak(){
+  S.tb = true; S.setter = -1; S.guessers = S.tied.slice(); S.rlv = roundLevel();
+  const titles = {}; S.guessers.forEach(i => { titles[i] = pickRandom(); });
+  startRound(titles);
+}
+
+applyLang();
+home();
+PF.init().then(() => { if (PF.fb) home(); });
+</script>
+</body>
+</html>
