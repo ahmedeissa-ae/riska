@@ -705,6 +705,7 @@ function statRisk(pi, ok){ const pl = S.players && S.players[pi]; if (pl) update
 // محفظة على الموبايل دلوقتي. في الأونلاين هتبقى على حساب اللاعب.
 // تكسب: هدية أول مرة + هدية كل يوم + حل اسم + إعلان من المتجر. تصرف: التلميح.
 // الشراء بفلوس حقيقية بعدين لما منصة النشر تدعم الدفع (CrazyGames / فيسبوك).
+const LEVEL_COINS = {1: 10, 2: 25, 3: 50, 4: 100}; // هدية أول مرة توصل لكل مستوى
 const HINT_COST = 10, START_COINS = 30, DAILY_COINS = 20, AD_COINS = 15, WIN_COINS = 3, PERFECT_COINS = 8;
 let MEM_COINS = null;
 function getCoins(){ let v = null; try { v = localStorage.getItem('gtn_coins'); } catch(e){} if (v === null) v = MEM_COINS; if (v === null) { setCoins(START_COINS); return START_COINS; } return +v || 0; }
@@ -1332,7 +1333,17 @@ function endRound(){
   S.boards.forEach(b => {
     S.delta[b.owner] += penalty(b); b.fresh = null;
     const pen = penalty(b), won = b.status === 'won';
-    updateProfile(S.players[b.owner].prof, p => { p.titles++; p.sumPen += pen; if (won) { p.solved++; if (pen === 0) p.perfect++; } });
+    const pl = S.players[b.owner];
+    updateProfile(pl.prof, p => {
+      const before = rankOf(p);
+      p.titles++; p.sumPen += pen; if (won) { p.solved++; if (pen === 0) p.perfect++; }
+      // ترقية مستوى = هدية كوينز (مرة واحدة لكل مستوى جديد)
+      const after = rankOf(p);
+      if (after !== 'new' && (before === 'new' || after > before) && !(p.rewarded || []).includes(after)) {
+        p.rewarded = (p.rewarded || []).concat(after);
+        setTimeout(() => { addCoins(LEVEL_COINS[after], `${pl.name} ${t('ranks')[after]}`); confetti(80); }, 900);
+      }
+    });
   });
   S.players.forEach((p, i) => { if (S.guessers.includes(i)) p.score += S.delta[i]; });
   const last = S.tb || S.round === S.rounds - 1;
